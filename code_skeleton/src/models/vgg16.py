@@ -20,7 +20,7 @@ from tensorflow.keras import Model
 from core import BaseDataSource, BaseModel
 import util.gaze
 
-from vgg16_config import config
+from models.vgg16_config import config
 
 class VGG16(BaseModel):
     """An example neural network architecture."""
