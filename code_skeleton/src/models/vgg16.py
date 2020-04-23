@@ -38,19 +38,19 @@ class VGG16(BaseModel):
                 if i < 2:
                     # The first two sequences between Pooling layers (only 2 convolutions) 
                     for j in range(2):
-                    x = keras.layers.Conv2D(
-                        filters=num_filters,
-                        kernel_size=config['filter_size'][i],
-                        padding = 'same',
-                        data_format='channels_first',
-                        activation='relu')(x) 
+                        x = keras.layers.Conv2D(
+                            filters=num_filters,
+                            kernel_size=config['filter_size'][i],
+                            padding = 'same',
+                            data_format='channels_first',
+                            activation='relu')(x) 
                 else:
                     for j in range(3):
-                    x = keras.layers.Conv2D(
-                        filters=num_filters,
-                        kernel_size=config['filter_size'][i],
-                        padding = 'same',
-                        activation='relu')(x)
+                        x = keras.layers.Conv2D(
+                            filters=num_filters,
+                            kernel_size=config['filter_size'][i],
+                            padding = 'same',
+                            activation='relu')(x)
                 # Apply pooling layer after each sequence of convolution layers
                 x = keras.layers.MaxPooling2D(pool_size=config['pool_size'][i], 
                                               strides=config['strides'][i])(x)
