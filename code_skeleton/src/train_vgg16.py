@@ -57,7 +57,7 @@ if __name__ == '__main__':
     with tf.Session(config=session_config) as session:
 
         # Declare some parameters
-        batch_size = 64
+        batch_size = 32
         learning_rate = 1e-4
         data_to_retrieve = ['left-eye', 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye

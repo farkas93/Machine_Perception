@@ -13,7 +13,7 @@ config['validation_steps_per_epoch'] = 1
 config['metrics'] = 'mse'
 
 # General model configs
-config['num_filters'] = [64, 128, 256, 512, 512]    # Number of filters for every convolutional layer.
+config['num_filters'] = [64, 128, 256, 256, 256]    # Number of filters for every convolutional layer.
 config['filter_size'] = [3, 3, 3, 3, 3]             # Kernel size for convoluional layers.
 config['strides'] = [1, 1, 2, 2, 2]                 # Strides for MaxPool layers
 config['pool_size'] = [2, 2, 2, 2, 2]               # Pool_size for MaxPool layers

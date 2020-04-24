@@ -60,14 +60,14 @@ class Dataset():
     if is_training or is_testing:
       self.gaze = tfio.IODataset.from_hdf5(self.path, '/' + str(keys[0]) + '/gaze', spec=tf.float64)
 
-    for key in keys[1:]:
-      temp = tfio.IODataset.from_hdf5(self.path, '/' + str(key) + '/left-eye', spec=tf.uint8)
-      self.left_eye = self.left_eye.concatenate(temp)
-      temp = tfio.IODataset.from_hdf5(self.path, '/' + str(key) + '/head', spec=tf.float64)
-      self.head = self.head.concatenate(temp)
-      if is_training or is_testing:
-        temp = tfio.IODataset.from_hdf5(self.path, '/' + str(key) + '/gaze', spec=tf.float64)
-        self.gaze = self.gaze.concatenate(temp)
+    # for key in keys[1:]:
+    #   temp = tfio.IODataset.from_hdf5(self.path, '/' + str(key) + '/left-eye', spec=tf.uint8)
+    #   self.left_eye = self.left_eye.concatenate(temp)
+    #   temp = tfio.IODataset.from_hdf5(self.path, '/' + str(key) + '/head', spec=tf.float64)
+    #   self.head = self.head.concatenate(temp)
+    #   if is_training or is_testing:
+    #     temp = tfio.IODataset.from_hdf5(self.path, '/' + str(key) + '/gaze', spec=tf.float64)
+    #     self.gaze = self.gaze.concatenate(temp)
 
     if is_testing or is_training:
       self.data = tf.data.Dataset.zip((self.left_eye, self.head, self.gaze))
