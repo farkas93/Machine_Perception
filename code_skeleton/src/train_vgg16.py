@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
             # We may use a user-defined identifier to resume previous training or
             # perform predictions on a pre-trained model.
-            identifier=identifier,
+            identifier=None,
         )
 
         if args.restore is None:
