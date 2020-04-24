@@ -10,7 +10,7 @@ class Trainer:
     self.model = model # VGGNet(config['vggnet'])
 
     # Used loss function MSE:
-    self.loss_fn = keras.losses.mean_squared_error()
+    self.loss_fn = keras.losses.MeanSquaredError()
 
     # Used optimizer ADAM
     self.optimizer_fn = keras.optimizers.Adam(lr = self.config['learning_rate'])
