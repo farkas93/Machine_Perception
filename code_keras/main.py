@@ -18,10 +18,10 @@ def main(config):
     config,
     os.path.abspath(os.path.join(data_path, config['train_data'])),
     config['batch_size'],
-    20,
+    100,
     True,
     False
-    )
+    ).get_data()
 
   test_ds = Dataset(
     config,
@@ -30,7 +30,7 @@ def main(config):
     0,
     False,
     True
-    )
+    ).get_data()
 
   val_ds = Dataset(
     config,
@@ -39,7 +39,7 @@ def main(config):
     0,
     False,
     False
-    )
+    ).get_data()
 
   # Initialize model
   model = VGGNet(config['vggnet'])
@@ -48,10 +48,10 @@ def main(config):
   trainer = Trainer(config, model)
 
   # Train the network:
-  trainer.train(train_ds.get_data(), test_ds.get_data())
+  trainer.train(train_ds, test_ds)
 
   # Create preditions with trained network:
-  predictions = trainer.predict(val_ds.get_data())
+  predictions = trainer.predict(val_ds)
 
   # TODO Save predictions in CSV file:
 

@@ -27,8 +27,8 @@ class Dataset():
 
     self.is_training = is_training
     self.is_testing = is_testing
-
     self.path = path
+
     """
       each archive contains:
         face - a list 224x224 BGR images of type uint8
@@ -39,7 +39,6 @@ class Dataset():
         face-landmarks - a list of 33x2 arrays. Each row contains the (u,v) coordinates of selected facial landmarks as found in the provided face image patches.
         gaze (except in test set) - a list of 1x2 arrays. Each row contains the Euler angle representations of gaze direction given in radians.
     """
-
     if (self.config['model'] == 'vggnet'):
       if is_training or is_testing:
         self.data = tf.data.Dataset.from_generator(
