@@ -64,7 +64,8 @@ class VGG16(BaseModel):
             #x = tf.layers.dropout(x, rate=0.5, training=self.is_training, name='drop')
 
             # Concatenate head pose to our features
-            injected_layer = tf.concat([x, input_tensors['head']], axis=1)
+            #injected_layer = tf.concat([x, input_tensors['head']], axis=1)
+            keras.layers.concatenate([x, input_tensors['head']], axis=1)
 
             # FC layers            
             fc1_layer = keras.Dense(units=4096, activation='relu')(injected_layer)
