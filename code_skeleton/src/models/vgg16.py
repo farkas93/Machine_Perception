@@ -68,13 +68,13 @@ class VGG16(BaseModel):
             injected_layer = keras.layers.concatenate([x, input_tensors['head']], axis=1)
 
             # FC layers            
-            fc1_layer = keras.Dense(units=4096, activation='relu')(injected_layer)
-            fc2_layer = keras.Dense(units=4096, activation='relu')(fc1_layer)
+            fc1_layer = keras.layers.Dense(units=4096, activation='relu')(injected_layer)
+            fc2_layer = keras.layers.Dense(units=4096, activation='relu')(fc1_layer)
             self.summary.histogram('fc2/activations', fc2_layer)
 
             # Directly regress two polar angles for gaze direction
-            out = keras.Dense(units=2, activation='softmax')(fc2_layer)
-            self.summary.histogram('fc9/activations', out)
+            out = keras.layers.Dense(units=2, activation='softmax')(fc2_layer)
+            self.summary.histogram('output_layer/activations', out)
 
         # Define outputs
         loss_terms = {}
