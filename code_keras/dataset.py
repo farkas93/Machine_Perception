@@ -39,11 +39,6 @@ class Dataset():
         face-landmarks - a list of 33x2 arrays. Each row contains the (u,v) coordinates of selected facial landmarks as found in the provided face image patches.
         gaze (except in test set) - a list of 1x2 arrays. Each row contains the Euler angle representations of gaze direction given in radians.
     """
-    with h5py.File(self.path, 'r') as hf:
-      keys = list(hf.keys())
-      for key in keys:
-        print(hf[str(key) + '/head'])
-        break
 
     if (self.config['model'] == 'vggnet'):
       if is_training or is_testing:
