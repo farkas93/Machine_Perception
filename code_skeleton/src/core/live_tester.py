@@ -185,6 +185,11 @@ class LiveTester(object):
                                if not v.name.startswith('test/')])
             test_vars = dict([(v.name, v) for v in all_variables
                               if v.name.startswith('test/')])
+            print("TRAIN VARS")
+            print(train_vars)
+            print("TEST VARS")
+            print(test_vars)
+            
             self._copy_variables_to_test_model_op = tf.tuple([
                 test_vars['test/' + k].assign(train_vars[k]) for k in train_vars.keys()
                 if 'test/' + k in test_vars
