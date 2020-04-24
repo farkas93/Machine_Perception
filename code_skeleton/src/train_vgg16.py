@@ -21,6 +21,8 @@ import tensorflow as tf
 import logging
 logger = logging.getLogger(__name__)
 
+from data_locaction import dataconfig
+
 if __name__ == '__main__':
 
     # Set global log level
@@ -95,10 +97,10 @@ if __name__ == '__main__':
 
             # Data sources for training and testing.
             train_data={
-                'real': HDF5Source(
+                'float32': HDF5Source(
                     session,
                     batch_size,
-                    hdf_path='/cluster/project/infk/hilliges/lectures/mp20/project3/mp20_train.h5',
+                    hdf_path=dataconfig['train_data'],
                     entries_to_use=data_to_retrieve,
                     min_after_dequeue=2000,
                     data_format='NCHW',
@@ -107,10 +109,10 @@ if __name__ == '__main__':
                 ),
             },
             test_data={
-                'real': HDF5Source(
+                'float32': HDF5Source(
                     session,
                     batch_size,
-                    hdf_path='/cluster/project/infk/hilliges/lectures/mp20/project3/mp20_validation.h5',
+                    hdf_path=dataconfig['val_data'],
                     entries_to_use=data_to_retrieve,
                     testing=True,
                     num_threads=2,
@@ -125,16 +127,14 @@ if __name__ == '__main__':
 
         if args.restore is None:
             # Train this model for a set number of epochs
-            model.train(
-                num_epochs=20,
-            )
+            model.start_training()
 
         # Evaluate for submission
         model.evaluate_for_submission(
             HDF5Source(
                 session,
                 batch_size,
-                hdf_path='/cluster/project/infk/hilliges/lectures/mp20/project3/mp20_test_students.h5',
+                hdf_path=dataconfig['test_data'],
                 entries_to_use=[k for k in data_to_retrieve if k != 'gaze'],
                 testing=True,
                 num_threads=1,
