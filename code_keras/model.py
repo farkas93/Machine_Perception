@@ -34,10 +34,10 @@ class VGGNet(Model):
     # TODO And here we should add the head positions to the network, smh ... maybe concatenate
     injected_layer = keras.layers.concatenate([flatten_layer, input_head])
 
-    fc1_layer = keras.Dense(units=4096, activation='relu')(injected_layer)
-    fc2_layer = keras.Dense(units=4096, activation='relu')(fc1_layer)
+    fc1_layer = keras.layers.Dense(units=4096, activation='relu')(injected_layer)
+    fc2_layer = keras.layers.Dense(units=4096, activation='relu')(fc1_layer)
 
-    out = keras.Dense(units=2, activation='softmax')(fc2_layer)
+    out = keras.layers.Dense(units=2, activation='softmax')(fc2_layer)
 
     # Output is a 2D vector
     return out
