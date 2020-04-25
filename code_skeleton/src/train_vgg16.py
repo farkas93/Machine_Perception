@@ -61,7 +61,7 @@ if __name__ == '__main__':
         # Declare some parameters
         batch_size = vgg_config['batch_size']
         learning_rate = vgg_config['learning_rate']
-        data_to_retrieve = ['eye-region', 'gaze', 'head']  # Available are: left-eye
+        data_to_retrieve = [vgg_config['eye_patch'], 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye
                                                          #                eye-region
                                                          #                face

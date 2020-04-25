@@ -29,7 +29,7 @@ class VGG16(BaseModel):
         """Build model."""
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
-        x = tf.keras.backend.cast(input_tensors['eye-region'], dtype = tf.float32)
+        x = tf.keras.backend.cast(input_tensors[vgg_config['eye_patch']], dtype = tf.float32)
 
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
