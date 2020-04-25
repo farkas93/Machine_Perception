@@ -21,7 +21,7 @@ import tensorflow as tf
 import logging
 logger = logging.getLogger(__name__)
 
-from data_locaction import dataconfig
+from data_location import dataconfig
 
 from models.vgg16_config import vgg_config
 
