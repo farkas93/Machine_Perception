@@ -59,7 +59,7 @@ if __name__ == '__main__':
         # Declare some parameters
         batch_size = 32
         learning_rate = 1e-5
-        data_to_retrieve = ['left-eye', 'gaze', 'head']  # Available are: left-eye
+        data_to_retrieve = ['eye-region', 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye
                                                          #                eye-region
                                                          #                face

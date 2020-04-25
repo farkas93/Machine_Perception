@@ -29,7 +29,7 @@ class VGG16(BaseModel):
         """Build model."""
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
-        x = tf.keras.backend.cast(input_tensors['left-eye'], dtype = tf.float32)
+        x = tf.keras.backend.cast(input_tensors['eye-region'], dtype = tf.float32)
 
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
@@ -38,15 +38,15 @@ class VGG16(BaseModel):
                 scope_name= 'conv'+str(i)
                 with tf.variable_scope(scope_name):
                     if i < 2:
-                            # The first two sequences between Pooling layers (only 2 convolutions) 
-                            for j in range(2):
-                                x = tf.keras.layers.Conv2D(
-                                    filters=num_filters,
-                                    kernel_size=config['filter_size'][i],
-                                    padding = 'same',
-                                    data_format='channels_first',
-                                    activation='relu',
-                                    name='conv2d')(x) 
+                        # The first two sequences between Pooling layers (only 2 convolutions) 
+                        for j in range(2):
+                            x = tf.keras.layers.Conv2D(
+                                filters=num_filters,
+                                kernel_size=config['filter_size'][i],
+                                padding = 'same',
+                                data_format='channels_first',
+                                activation='relu',
+                                name='conv2d')(x) 
                     else:
                         for j in range(3):
                             x = tf.keras.layers.Conv2D(
@@ -77,7 +77,7 @@ class VGG16(BaseModel):
             self.summary.histogram('fc2/activations', fc2_layer)
 
             # Directly regress two polar angles for gaze direction            
-            out = tf.keras.layers.Dense(units=2, activation='softmax', name='output_layer')(fc2_layer)
+            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc2_layer)
             self.summary.histogram('output_layer/activations', out)
 
         # Define outputs
