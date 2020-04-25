@@ -279,8 +279,8 @@ class BaseModel(object):
                 optimizer_class = tf.train.AdamOptimizer
                 optimizer = optimizer_class(
                     learning_rate=self.learning_rate_multiplier * spec['learning_rate'],
-                    # beta1=0.9,
-                    # beta2=0.999,
+                    beta1=0.9,
+                    beta2=0.95,
                 )
                 final_loss = self.loss_terms['train'][loss_term_key]
                 if len(reg_losses) > 0:

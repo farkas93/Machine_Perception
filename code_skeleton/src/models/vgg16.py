@@ -20,7 +20,7 @@ from tensorflow.keras import Model
 from core import BaseDataSource, BaseModel
 import util.gaze
 
-from models.vgg16_config import config
+from models.vgg16_config import vgg_config
 
 class VGG16(BaseModel):
     """An example neural network architecture."""
@@ -34,7 +34,7 @@ class VGG16(BaseModel):
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
         with tf.variable_scope('conv'):
-            for i, num_filters in enumerate(config['num_filters']):
+            for i, num_filters in enumerate(vgg_config['num_filters']):
                 scope_name= 'conv'+str(i)
                 with tf.variable_scope(scope_name):
                     if i < 2:
@@ -42,7 +42,7 @@ class VGG16(BaseModel):
                         for j in range(2):
                             x = tf.keras.layers.Conv2D(
                                 filters=num_filters,
-                                kernel_size=config['filter_size'][i],
+                                kernel_size=vgg_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
                                 activation='relu',
@@ -51,18 +51,16 @@ class VGG16(BaseModel):
                         for j in range(3):
                             x = tf.keras.layers.Conv2D(
                                 filters=num_filters,
-                                kernel_size=config['filter_size'][i],
+                                kernel_size=vgg_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
                                 activation='relu',
                                 name='conv2d')(x)
                 
-                # scope_name= 'maxpool'+str(i)
-                # with tf.variable_scope(scope_name):
                 # Apply pooling layer after each sequence of convolution layers
-                x = tf.keras.layers.MaxPooling2D(pool_size=config['pool_size'][i], 
+                x = tf.keras.layers.MaxPooling2D(pool_size=vgg_config['pool_size'][i], 
                                             data_format='channels_first',
-                                            strides=config['strides'][i])(x)
+                                            strides=vgg_config['strides'][i])(x)
 
         with tf.variable_scope('fc'):
             # Create a flattened representation of the input layer
@@ -90,9 +88,9 @@ class VGG16(BaseModel):
                 loss_terms['gaze_mse'] = tf.keras.losses.MeanSquaredError()(out, y)
             with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
                 metrics['gaze_angular'] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
-        return {'gaze': x}, loss_terms, metrics
+        return {'gaze': out}, loss_terms, metrics
 
     def start_training(self):
         self.train(
-            num_epochs=config['n_epochs'] 
+            num_epochs=vgg_config['n_epochs'] 
         )

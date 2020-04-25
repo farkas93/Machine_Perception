@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 from data_locaction import dataconfig
 
+from models.vgg16_config import vgg_config
+
 if __name__ == '__main__':
 
     # Set global log level
@@ -57,8 +59,8 @@ if __name__ == '__main__':
     with tf.Session(config=session_config) as session:
 
         # Declare some parameters
-        batch_size = 32
-        learning_rate = 1e-5
+        batch_size = vgg_config['batch_size']
+        learning_rate = vgg_config['learning_rate']
         data_to_retrieve = ['eye-region', 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye
                                                          #                eye-region
