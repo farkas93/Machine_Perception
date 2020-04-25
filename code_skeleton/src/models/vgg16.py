@@ -87,7 +87,7 @@ class VGG16(BaseModel):
             y = input_tensors['gaze']
             with tf.variable_scope('mse'):  # To optimize
                 # NOTE: You are allowed to change the optimized loss
-                loss_terms['gaze_mse'] = tf.keras.losses.MeanSquaredError()(out, y)
+                loss_terms['gaze_mse'] = tf.reduce_mean(tf.squared_difference(out, y))
             with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
                 metrics['gaze_angular'] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
         return {'gaze': x}, loss_terms, metrics
