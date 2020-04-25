@@ -53,23 +53,21 @@ class VGG16(BaseModel):
                                 filters=num_filters,
                                 kernel_size=config['filter_size'][i],
                                 padding = 'same',
+                                data_format='channels_first',
                                 activation='relu',
                                 name='conv2d')(x)
-
+                
                 # scope_name= 'maxpool'+str(i)
                 # with tf.variable_scope(scope_name):
                 # Apply pooling layer after each sequence of convolution layers
                 x = tf.keras.layers.MaxPooling2D(pool_size=config['pool_size'][i], 
+                                            data_format='channels_first',
                                             strides=config['strides'][i])(x)
 
         with tf.variable_scope('fc'):
             # Create a flattened representation of the input layer
             
-            x = tf.keras.layers.Flatten()(x)
-
-            # NOTE: When applying a dropout layer,
-            #       do NOT forget to use training=self.is_training
-
+            x = tf.keras.layers.Flatten(data_format='channels_first')(x)
             # Concatenate head pose to our features          
             injected_layer = tf.keras.layers.concatenate([x, input_tensors['head']], axis=1)
 
@@ -89,7 +87,7 @@ class VGG16(BaseModel):
             y = input_tensors['gaze']
             with tf.variable_scope('mse'):  # To optimize
                 # NOTE: You are allowed to change the optimized loss
-                loss_terms['gaze_mse'] = tf.reduce_mean(tf.squared_difference(out, y))
+                loss_terms['gaze_mse'] = tf.keras.losses.MeanSquaredError()(out, y)
             with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
                 metrics['gaze_angular'] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
         return {'gaze': x}, loss_terms, metrics
