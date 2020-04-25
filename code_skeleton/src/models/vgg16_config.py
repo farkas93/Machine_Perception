@@ -5,7 +5,7 @@ import os
 vgg_config = dict()
 
 # General configs for training
-vgg_config['n_epochs'] = 20
+vgg_config['n_epochs'] = 15
 vgg_config['batch_size'] = 16
 vgg_config['learning_rate'] = 1e-5
 vgg_config['eye_patch'] = 'left-eye' #'right-eye', 'eye-region'
@@ -14,7 +14,7 @@ vgg_config['eye_patch'] = 'left-eye' #'right-eye', 'eye-region'
 # vgg_config['validation_steps_per_epoch'] = 1
 vgg_config['loss_terms'] = ['gaze_mse']
 vgg_config['metrics'] = ['gaze_angular']
-vgg_config['reduce_lr_after_steps'] = 10000
+vgg_config['reduce_lr_after_steps'] = 20000
 vgg_config['lr_multiplier_gain'] = 0.1
 
 # General model configs
