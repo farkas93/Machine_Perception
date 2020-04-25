@@ -27,6 +27,7 @@ class VGG16(BaseModel):
 
     def build_model(self, data_sources: Dict[str, BaseDataSource], mode: str):
         """Build model."""
+        self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
         x = tf.keras.backend.cast(input_tensors[vgg_config['eye_patch']], dtype = tf.float32)
@@ -85,10 +86,16 @@ class VGG16(BaseModel):
             y = input_tensors['gaze']
             with tf.variable_scope('mse'):  # To optimize
                 # NOTE: You are allowed to change the optimized loss
-                loss_terms['gaze_mse'] = tf.reduce_mean(tf.squared_difference(out, y))
+                loss_terms[vgg_config['loss_terms'][0]] = tf.reduce_mean(tf.squared_difference(out, y))
             with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
-                metrics['gaze_angular'] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
+                metrics[vgg_config['metrics'][0]] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
         return {'gaze': out}, loss_terms, metrics
+
+    def train_loop_post(self, current_step):
+        if current_step > self.next_step_to_reduce_lr:
+            self.next_step_to_reduce_lr += vgg_config['reduce_lr_after_steps']
+            self.learning_rate_multiplier* vgg_config['lr_multiplier_gain']
+            self._build_optimizers()
 
     def start_training(self):
         self.train(

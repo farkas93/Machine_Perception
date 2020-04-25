@@ -89,13 +89,13 @@ if __name__ == '__main__':
             # the `loss_terms` output of `BaseModel::build_model`.
             learning_schedule=[
                 {
-                    'loss_terms_to_optimize': ['gaze_mse'],
-                    'metrics': ['gaze_angular'],
+                    'loss_terms_to_optimize': vgg_config['loss_terms'],
+                    'metrics': vgg_config['metrics'],
                     'learning_rate': learning_rate,
                 },
             ],
 
-            test_losses_or_metrics=['gaze_mse', 'gaze_angular'],
+            test_losses_or_metrics=[vgg_config['loss_terms'][0], vgg_config['metrics'][0]],
 
             # Data sources for training and testing.
             train_data={
