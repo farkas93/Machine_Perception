@@ -108,6 +108,9 @@ class BaseModel(object):
 
         # Run-time parameters
         with tf.variable_scope('learning_params'):
+            # EDIT:
+            self._learning_rate = 1e-5
+            self._learning_rate_placeholder = tf.placeholder(dtype=tf.float32)
             self.is_training = tf.placeholder(tf.bool)
             self.use_batch_statistics = tf.placeholder(tf.bool)
             self.learning_rate_multiplier = tf.Variable(1.0, trainable=False, dtype=tf.float32)
@@ -277,8 +280,10 @@ class BaseModel(object):
                 assert loss_term_key in self.loss_terms['train'].keys()
                 variables_to_train = all_trainable_variables
                 optimizer_class = tf.train.AdamOptimizer
+                self._learning_rate = spec['learning_rate']
                 optimizer = optimizer_class(
-                    learning_rate=self.learning_rate_multiplier * spec['learning_rate'],
+                    learning_rate=self.learning_rate_multiplier * self._learning_rate_placeholder,
+                    # learning_rate=self.learning_rate_multiplier * spec['learning_rate'],
                     beta1=0.9,
                     beta2=0.95,
                 )
@@ -335,6 +340,7 @@ class BaseModel(object):
                 outcome = self._tensorflow_session.run(
                     fetches=fetches,
                     feed_dict={
+                        self._learning_rate_placeholder: self._learning_rate,
                         self.is_training: True,
                         self.use_batch_statistics: True,
                     }

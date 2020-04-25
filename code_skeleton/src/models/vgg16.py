@@ -20,14 +20,36 @@ from tensorflow.keras import Model
 from core import BaseDataSource, BaseModel
 import util.gaze
 
+from typing import Any, Dict, List
+
 from models.vgg16_config import vgg_config
 
 class VGG16(BaseModel):
     """An example neural network architecture."""
+    
+    def __init__(self,
+                 tensorflow_session: tf.Session,
+                 learning_schedule: List[Dict[str, Any]] = [],
+                 train_data: Dict[str, BaseDataSource] = {},
+                 test_data: Dict[str, BaseDataSource] = {},
+                 test_losses_or_metrics: str = None,
+                 use_batch_statistics_at_test: bool = True,
+                 identifier: str = None):
+        super().__init__(
+            tensorflow_session = tensorflow_session, 
+            learning_schedule = learning_schedule,
+            train_data = train_data, 
+            test_data = test_data, 
+            test_losses_or_metrics = test_losses_or_metrics, 
+            use_batch_statistics_at_test = use_batch_statistics_at_test, 
+            identifier = identifier
+            )
+        self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
+
 
     def build_model(self, data_sources: Dict[str, BaseDataSource], mode: str):
         """Build model."""
-        self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
+        # self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
         x = tf.keras.backend.cast(input_tensors[vgg_config['eye_patch']], dtype = tf.float32)
@@ -93,9 +115,8 @@ class VGG16(BaseModel):
 
     def train_loop_post(self, current_step):
         if current_step > self.next_step_to_reduce_lr:
+            self._learning_rate = vgg_config['lr_multiplier_gain'] * self._learning_rate
             self.next_step_to_reduce_lr += vgg_config['reduce_lr_after_steps']
-            self.learning_rate_multiplier* vgg_config['lr_multiplier_gain']
-            self._build_optimizers()
 
     def start_training(self):
         self.train(
