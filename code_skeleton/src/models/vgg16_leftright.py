@@ -52,55 +52,84 @@ class VGG16(BaseModel):
         # self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
-        x = tf.keras.backend.cast(input_tensors[vgg_config['eye_patch']], dtype = tf.float32)
-
-        #Downscale input
-        x = tf.keras.layers.MaxPooling2D(pool_size=2, 
-                                    data_format='channels_first',
-                                    strides=2)(x)
+        left = tf.keras.backend.cast(input_tensors['left-eye'], dtype = tf.float32)
+        right = tf.keras.backend.cast(input_tensors['right-eye'], dtype = tf.float32)
 
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
-        with tf.variable_scope('conv'):
+        with tf.variable_scope('conv_left'):
             for i, num_filters in enumerate(vgg_config['num_filters']):
                 scope_name= 'conv'+str(i)
                 with tf.variable_scope(scope_name):
                     if i < 2:
                         # The first two sequences between Pooling layers (only 2 convolutions) 
                         for j in range(2):
-                            x = tf.keras.layers.Conv2D(
+                            left = tf.keras.layers.Conv2D(
                                 filters=num_filters,
                                 kernel_size=vgg_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
                                 activation='relu',
-                                name='conv2d')(x) 
+                                name='conv2d')(left) 
                     else:
                         for j in range(3):
-                            x = tf.keras.layers.Conv2D(
+                            left = tf.keras.layers.Conv2D(
                                 filters=num_filters,
                                 kernel_size=vgg_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
                                 activation='relu',
-                                name='conv2d')(x)
+                                name='conv2d')(left)
                 
                 # Apply pooling layer after each sequence of convolution layers
-                x = tf.keras.layers.MaxPooling2D(pool_size=vgg_config['pool_size'][i], 
+                left = tf.keras.layers.MaxPooling2D(pool_size=vgg_config['pool_size'][i], 
                                             data_format='channels_first',
-                                            strides=vgg_config['strides'][i])(x)
+                                            strides=vgg_config['strides'][i])(left)
+
+        # Here, the `tf.variable_scope` scope is used to structure the
+        # visualization in the Graphs tab on Tensorboard
+        with tf.variable_scope('conv_right'):
+            for i, num_filters in enumerate(vgg_config['num_filters']):
+                scope_name= 'conv'+str(i)
+                with tf.variable_scope(scope_name):
+                    if i < 2:
+                        # The first two sequences between Pooling layers (only 2 convolutions) 
+                        for j in range(2):
+                            right = tf.keras.layers.Conv2D(
+                                filters=num_filters,
+                                kernel_size=vgg_config['filter_size'][i],
+                                padding = 'same',
+                                data_format='channels_first',
+                                activation='relu',
+                                name='conv2d')(right) 
+                    else:
+                        for j in range(3):
+                            right = tf.keras.layers.Conv2D(
+                                filters=num_filters,
+                                kernel_size=vgg_config['filter_size'][i],
+                                padding = 'same',
+                                data_format='channels_first',
+                                activation='relu',
+                                name='conv2d')(right)
+                
+                # Apply pooling layer after each sequence of convolution layers
+                right = tf.keras.layers.MaxPooling2D(pool_size=vgg_config['pool_size'][i], 
+                                            data_format='channels_first',
+                                            strides=vgg_config['strides'][i])(right)
 
         with tf.variable_scope('fc'):
             # Create a flattened representation of the input layer
             
-            x = tf.keras.layers.Flatten(data_format='channels_first')(x)
+            left_flat = tf.keras.layers.Flatten(data_format='channels_first')(left)
+            right_flat = tf.keras.layers.Flatten(data_format='channels_first')(right)
 
-            x = tf.keras.layers.Dropout(rate=0.5)(x, self.is_training)
+            left_flat = tf.keras.layers.Dropout(rate=0.25)(left_flat, self.is_training)
+            right_flat = tf.keras.layers.Dropout(rate=0.25)(right_flat, self.is_training)
             # Concatenate head pose to our features          
-            #injected_layer = tf.keras.layers.concatenate([x, input_tensors['head']], axis=1)
+            injected_layer = tf.keras.layers.concatenate([left_flat, right_flat, input_tensors['head']], axis=1)
 
             # FC layers           
-            fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(x)             
+            fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)             
             fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)       
 
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
