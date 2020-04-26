@@ -14,8 +14,8 @@ vgg_config['eye_patch'] = 'left-eye' #'right-eye', 'eye-region'
 # vgg_config['validation_steps_per_epoch'] = 1
 vgg_config['loss_terms'] = ['gaze_mse']
 vgg_config['metrics'] = ['gaze_angular']
-vgg_config['reduce_lr_after_steps'] = 30000
-vgg_config['lr_multiplier_gain'] = 0.1
+vgg_config['reduce_lr_after_steps'] = 5000
+vgg_config['lr_multiplier_gain'] = 0.5
 
 # General model configs
 vgg_config['num_filters'] = [64, 128, 256, 512, 512]    # Number of filters for every convolutional layer.
