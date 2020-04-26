@@ -95,13 +95,13 @@ class VGG16(BaseModel):
             
             x = tf.keras.layers.Flatten(data_format='channels_first')(x)
 
-            x = tf.keras.layers.Dropout(rate=0.5, data_format='channels_first')(x)
+            x = tf.keras.layers.Dropout(rate=0.5, data_format='channels_first', name='dropout1')(x)
             # Concatenate head pose to our features          
             #injected_layer = tf.keras.layers.concatenate([x, input_tensors['head']], axis=1)
 
             # FC layers           
             fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(x)             
-            fc1_layer = tf.keras.layers.Dropout(rate=0.5, data_format='channels_first')(fc1_layer)       
+            fc1_layer = tf.keras.layers.Dropout(rate=0.5, data_format='channels_first', name='dropout2')(fc1_layer)       
 
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
             self.summary.histogram('fc2/activations', fc2_layer)
