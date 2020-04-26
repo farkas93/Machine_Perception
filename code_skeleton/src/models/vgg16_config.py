@@ -20,6 +20,6 @@ vgg_config['lr_multiplier_gain'] = 0.1
 # General model configs
 vgg_config['num_filters'] = [64, 128, 256, 512, 512]    # Number of filters for every convolutional layer.
 vgg_config['filter_size'] = [3, 3, 3, 3, 3]             # Kernel size for convoluional layers.
-vgg_config['strides'] = [1, 2, 2, 2, 2]                 # Strides for MaxPool layers
+vgg_config['strides'] = [1, 1, 2, 2, 2]                 # Strides for MaxPool layers
 vgg_config['pool_size'] = [2, 2, 2, 2, 2]               # Pool_size for MaxPool layers
 

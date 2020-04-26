@@ -54,6 +54,11 @@ class VGG16(BaseModel):
         input_tensors = data_source.output_tensors
         x = tf.keras.backend.cast(input_tensors[vgg_config['eye_patch']], dtype = tf.float32)
 
+        #Downscale input
+        x = tf.keras.layers.MaxPooling2D(pool_size=2, 
+                                    data_format='channels_first',
+                                    strides=2)(x)
+
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
         with tf.variable_scope('conv'):
@@ -89,11 +94,15 @@ class VGG16(BaseModel):
             # Create a flattened representation of the input layer
             
             x = tf.keras.layers.Flatten(data_format='channels_first')(x)
+
+            x = tf.keras.layers.Dropout(rate=0.5, data_format='channels_first')(x)
             # Concatenate head pose to our features          
-            injected_layer = tf.keras.layers.concatenate([x, input_tensors['head']], axis=1)
+            #injected_layer = tf.keras.layers.concatenate([x, input_tensors['head']], axis=1)
 
             # FC layers           
-            fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(injected_layer)            
+            fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(x)             
+            fc1_layer = tf.keras.layers.Dropout(rate=0.5, data_format='channels_first')(fc1_layer)       
+
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
             self.summary.histogram('fc2/activations', fc2_layer)
 
