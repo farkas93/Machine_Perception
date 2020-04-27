@@ -1,11 +1,11 @@
 gaga_config = dict()
 
 # General configs for training
-gaga_config['n_epochs'] = 15
+gaga_config['n_epochs'] = 10
 gaga_config['batch_size'] = 16
 gaga_config['learning_rate'] = 1e-4
-gaga_config['reduce_lr_after_steps'] = 20000
-gaga_config['lr_multiplier_gain'] = 0.1
+gaga_config['reduce_lr_after_steps'] = 15000
+gaga_config['lr_multiplier_gain'] = 0.7
 gaga_config['eye_patch'] = 'left-eye' #'right-eye', 'eye-region'
 gaga_config['loss_terms'] = ['gaze_mse']
 gaga_config['metrics'] = ['gaze_angular']
