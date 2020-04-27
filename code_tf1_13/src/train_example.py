@@ -21,9 +21,7 @@ import tensorflow as tf
 import logging
 logger = logging.getLogger(__name__)
 
-from data_location import dataconfig
-
-from models.vgg16_config import vgg_config
+from configs.data_location import dataconfig
 
 if __name__ == '__main__':
 
@@ -59,9 +57,9 @@ if __name__ == '__main__':
     with tf.Session(config=session_config) as session:
 
         # Declare some parameters
-        batch_size = vgg_config['batch_size']
-        learning_rate = vgg_config['learning_rate']
-        data_to_retrieve = [vgg_config['eye_patch'], 'gaze', 'head']  # Available are: left-eye
+        batch_size = 64
+        learning_rate = 1e-4
+        data_to_retrieve = ['left-eye', 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye
                                                          #                eye-region
                                                          #                face
@@ -71,8 +69,8 @@ if __name__ == '__main__':
 
         # Define model
         from datasources import HDF5Source
-        from models.vgg16 import VGG16
-        model = VGG16(
+        from models import ExampleNet
+        model = ExampleNet(
             # Tensorflow session
             # Note: The same session must be used for the model and the data sources.
             session,
@@ -89,17 +87,17 @@ if __name__ == '__main__':
             # the `loss_terms` output of `BaseModel::build_model`.
             learning_schedule=[
                 {
-                    'loss_terms_to_optimize': vgg_config['loss_terms'],
-                    'metrics': vgg_config['metrics'],
+                    'loss_terms_to_optimize': ['gaze_mse'],
+                    'metrics': ['gaze_angular'],
                     'learning_rate': learning_rate,
                 },
             ],
 
-            test_losses_or_metrics=[vgg_config['loss_terms'][0], vgg_config['metrics'][0]],
+            test_losses_or_metrics=['gaze_mse', 'gaze_angular'],
 
             # Data sources for training and testing.
             train_data={
-                'float32': HDF5Source(
+                'real': HDF5Source(
                     session,
                     batch_size,
                     hdf_path=dataconfig['train_data'],
@@ -111,7 +109,7 @@ if __name__ == '__main__':
                 ),
             },
             test_data={
-                'float32': HDF5Source(
+                'real': HDF5Source(
                     session,
                     batch_size,
                     hdf_path=dataconfig['val_data'],
@@ -129,7 +127,9 @@ if __name__ == '__main__':
 
         if args.restore is None:
             # Train this model for a set number of epochs
-            model.start_training()
+            model.train(
+                num_epochs=20,
+            )
 
         # Evaluate for submission
         model.evaluate_for_submission(

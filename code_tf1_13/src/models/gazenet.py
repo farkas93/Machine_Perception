@@ -22,9 +22,9 @@ import util.gaze
 
 from typing import Any, Dict, List
 
-from models.vgg16_config import vgg_config
+from configs.gazenet_config import gazenet_config
 
-class VGG16(BaseModel):
+class GazeNet(BaseModel):
     """An example neural network architecture."""
     
     def __init__(self,
@@ -44,95 +44,61 @@ class VGG16(BaseModel):
             use_batch_statistics_at_test = use_batch_statistics_at_test, 
             identifier = identifier
             )
-        self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
+        self.next_step_to_reduce_lr = gazenet_config['reduce_lr_after_steps']
 
 
     def build_model(self, data_sources: Dict[str, BaseDataSource], mode: str):
         """Build model."""
-        # self.next_step_to_reduce_lr = vgg_config['reduce_lr_after_steps']
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
-        left = tf.keras.backend.cast(input_tensors['left-eye'], dtype = tf.float32)
-        right = tf.keras.backend.cast(input_tensors['right-eye'], dtype = tf.float32)
+        x = tf.keras.backend.cast(input_tensors[gazenet_config['eye_patch']], dtype = tf.float32)
+
+        #Downscale input so sizes are approximately the same as in the GazeNet paper
+        x = tf.keras.layers.MaxPooling2D(pool_size=2, 
+                                    data_format='channels_first',
+                                    strides=2)(x)
 
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
-        with tf.variable_scope('conv_left'):
-            for i, num_filters in enumerate(vgg_config['num_filters']):
+        with tf.variable_scope('conv'):
+            for i, num_filters in enumerate(gazenet_config['num_filters']):
                 scope_name= 'conv'+str(i)
                 with tf.variable_scope(scope_name):
                     if i < 2:
                         # The first two sequences between Pooling layers (only 2 convolutions) 
                         for j in range(2):
-                            left = tf.keras.layers.Conv2D(
+                            x = tf.keras.layers.Conv2D(
                                 filters=num_filters,
-                                kernel_size=vgg_config['filter_size'][i],
+                                kernel_size=gazenet_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
                                 activation='relu',
-                                name='conv2d')(left) 
+                                name='conv2d')(x) 
                     else:
                         for j in range(3):
-                            left = tf.keras.layers.Conv2D(
+                            x = tf.keras.layers.Conv2D(
                                 filters=num_filters,
-                                kernel_size=vgg_config['filter_size'][i],
+                                kernel_size=gazenet_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
                                 activation='relu',
-                                name='conv2d')(left)
+                                name='conv2d')(x)
                 
                 # Apply pooling layer after each sequence of convolution layers
-                left = tf.keras.layers.MaxPooling2D(pool_size=vgg_config['pool_size'][i], 
+                x = tf.keras.layers.MaxPooling2D(pool_size=gazenet_config['pool_size'][i], 
                                             data_format='channels_first',
-                                            strides=vgg_config['strides'][i])(left)
-
-        # Here, the `tf.variable_scope` scope is used to structure the
-        # visualization in the Graphs tab on Tensorboard
-        with tf.variable_scope('conv_right'):
-            for i, num_filters in enumerate(vgg_config['num_filters']):
-                scope_name= 'conv'+str(i)
-                with tf.variable_scope(scope_name):
-                    if i < 2:
-                        # The first two sequences between Pooling layers (only 2 convolutions) 
-                        for j in range(2):
-                            right = tf.keras.layers.Conv2D(
-                                filters=num_filters,
-                                kernel_size=vgg_config['filter_size'][i],
-                                padding = 'same',
-                                data_format='channels_first',
-                                activation='relu',
-                                name='conv2d')(right) 
-                    else:
-                        for j in range(3):
-                            right = tf.keras.layers.Conv2D(
-                                filters=num_filters,
-                                kernel_size=vgg_config['filter_size'][i],
-                                padding = 'same',
-                                data_format='channels_first',
-                                activation='relu',
-                                name='conv2d')(right)
-                
-                # Apply pooling layer after each sequence of convolution layers
-                right = tf.keras.layers.MaxPooling2D(pool_size=vgg_config['pool_size'][i], 
-                                            data_format='channels_first',
-                                            strides=vgg_config['strides'][i])(right)
+                                            strides=gazenet_config['strides'][i])(x)
 
         with tf.variable_scope('fc'):
             # Create a flattened representation of the input layer
             
-            left_flat = tf.keras.layers.Flatten(data_format='channels_first')(left)
-            right_flat = tf.keras.layers.Flatten(data_format='channels_first')(right)
+            x = tf.keras.layers.Flatten(data_format='channels_first')(x)
 
             # Concatenate head pose to our features          
-            injected_layer = tf.keras.layers.concatenate([left_flat, right_flat, input_tensors['head']], axis=1)
-
-            # FC layers      
-            fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)    
-
-            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)          
-            fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(fc1_layer)          
+            injected_layer = tf.keras.layers.concatenate([x, input_tensors['head']], axis=1)
             
-            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)       
+            # FC layers      
+            fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(injected_layer)
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
             self.summary.histogram('fc2/activations', fc2_layer)
 
@@ -147,17 +113,17 @@ class VGG16(BaseModel):
             y = input_tensors['gaze']
             with tf.variable_scope('mse'):  # To optimize
                 # NOTE: You are allowed to change the optimized loss
-                loss_terms[vgg_config['loss_terms'][0]] = tf.reduce_mean(tf.squared_difference(out, y))
+                loss_terms[gazenet_config['loss_terms'][0]] = tf.reduce_mean(tf.squared_difference(out, y))
             with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
-                metrics[vgg_config['metrics'][0]] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
+                metrics[gazenet_config['metrics'][0]] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
         return {'gaze': out}, loss_terms, metrics
 
     def train_loop_post(self, current_step):
         if current_step > self.next_step_to_reduce_lr:
-            self._learning_rate = vgg_config['lr_multiplier_gain'] * self._learning_rate
-            self.next_step_to_reduce_lr += vgg_config['reduce_lr_after_steps']
+            self._learning_rate = gazenet_config['lr_multiplier_gain'] * self._learning_rate
+            self.next_step_to_reduce_lr += gazenet_config['reduce_lr_after_steps']
 
     def start_training(self):
         self.train(
-            num_epochs=vgg_config['n_epochs'] 
+            num_epochs=gazenet_config['n_epochs'] 
         )

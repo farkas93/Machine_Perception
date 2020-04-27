@@ -21,7 +21,9 @@ import tensorflow as tf
 import logging
 logger = logging.getLogger(__name__)
 
-from data_location import dataconfig
+from configs.data_location import dataconfig
+
+from configs.gazenet_config import gazenet_config
 
 if __name__ == '__main__':
 
@@ -57,9 +59,9 @@ if __name__ == '__main__':
     with tf.Session(config=session_config) as session:
 
         # Declare some parameters
-        batch_size = 64
-        learning_rate = 1e-4
-        data_to_retrieve = ['left-eye', 'gaze', 'head']  # Available are: left-eye
+        batch_size = gazenet_config['batch_size']
+        learning_rate = gazenet_config['learning_rate']
+        data_to_retrieve = [gazenet_config['eye_patch'], 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye
                                                          #                eye-region
                                                          #                face
@@ -69,8 +71,8 @@ if __name__ == '__main__':
 
         # Define model
         from datasources import HDF5Source
-        from models import ExampleNet
-        model = ExampleNet(
+        from models.gazenet import GazeNet
+        model = GazeNet(
             # Tensorflow session
             # Note: The same session must be used for the model and the data sources.
             session,
@@ -87,17 +89,17 @@ if __name__ == '__main__':
             # the `loss_terms` output of `BaseModel::build_model`.
             learning_schedule=[
                 {
-                    'loss_terms_to_optimize': ['gaze_mse'],
-                    'metrics': ['gaze_angular'],
+                    'loss_terms_to_optimize': gazenet_config['loss_terms'],
+                    'metrics': gazenet_config['metrics'],
                     'learning_rate': learning_rate,
                 },
             ],
 
-            test_losses_or_metrics=['gaze_mse', 'gaze_angular'],
+            test_losses_or_metrics=[gazenet_config['loss_terms'][0], gazenet_config['metrics'][0]],
 
             # Data sources for training and testing.
             train_data={
-                'real': HDF5Source(
+                'float32': HDF5Source(
                     session,
                     batch_size,
                     hdf_path=dataconfig['train_data'],
@@ -109,7 +111,7 @@ if __name__ == '__main__':
                 ),
             },
             test_data={
-                'real': HDF5Source(
+                'float32': HDF5Source(
                     session,
                     batch_size,
                     hdf_path=dataconfig['val_data'],
@@ -127,9 +129,7 @@ if __name__ == '__main__':
 
         if args.restore is None:
             # Train this model for a set number of epochs
-            model.train(
-                num_epochs=20,
-            )
+            model.start_training()
 
         # Evaluate for submission
         model.evaluate_for_submission(
