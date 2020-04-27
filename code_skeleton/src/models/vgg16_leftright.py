@@ -123,15 +123,16 @@ class VGG16(BaseModel):
             left_flat = tf.keras.layers.Flatten(data_format='channels_first')(left)
             right_flat = tf.keras.layers.Flatten(data_format='channels_first')(right)
 
-            left_flat = tf.keras.layers.Dropout(rate=0.25)(left_flat, self.is_training)
-            right_flat = tf.keras.layers.Dropout(rate=0.25)(right_flat, self.is_training)
             # Concatenate head pose to our features          
             injected_layer = tf.keras.layers.concatenate([left_flat, right_flat, input_tensors['head']], axis=1)
 
-            # FC layers           
-            fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)             
-            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)       
+            # FC layers      
+            fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)    
 
+            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)          
+            fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(fc1_layer)          
+            
+            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)       
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
             self.summary.histogram('fc2/activations', fc2_layer)
 
