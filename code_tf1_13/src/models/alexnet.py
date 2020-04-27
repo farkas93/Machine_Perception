@@ -84,11 +84,13 @@ class AlexNet(BaseModel):
             x = tf.keras.layers.Flatten(data_format='channels_first')(x)
             
             # FC layers      
-            x = tf.keras.layers.Dropout(rate=0.5)(x, self.is_training)     
             fc1_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc1')(x)        
+            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)     
 
-            fc1_layer = tf.keras.layers.Dropout(rate=0.5)(fc1_layer, self.is_training)       
+
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
+            fc2_layer = tf.keras.layers.Dropout(rate=0.5)(fc2_layer, self.is_training)       
+
             self.summary.histogram('fc2/activations', fc2_layer)
 
             # Directly regress two polar angles for gaze direction            
