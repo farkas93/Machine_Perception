@@ -1,11 +1,16 @@
 gaga_config = dict()
 
 # General configs for training
-gaga_config['n_epochs'] = 14
+gaga_config['n_epochs'] = 20 # approx 130'000 steps
 gaga_config['batch_size'] = 16
 gaga_config['learning_rate'] = 1e-4
-gaga_config['reduce_lr_after_steps'] = 40250
-gaga_config['lr_multiplier_gain'] = 0.001
+
+#LR stuff
+gaga_config['nr_lr_reductions'] = 3
+gaga_config['lr_reductions'] = [0.001, 0.1, 0.1]
+gaga_config['apply_lr_reductions_at'] =  [40250, 90000, 110000]
+
+
 gaga_config['loss_terms'] = ['gaze_mse']
 gaga_config['metrics'] = ['gaze_angular']
 
