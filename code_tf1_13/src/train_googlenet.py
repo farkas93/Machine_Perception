@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 from configs.data_location import dataconfig
 
-from configs.gaga_config import gaga_config
+from configs.google_config import config as google_config
 
 if __name__ == '__main__':
 
@@ -41,15 +41,10 @@ if __name__ == '__main__':
 
     # Set identifier to that provided, and restore weights from there
     identifier = None
-    if dataconfig['output_local']:
-        path = dataconfig['outputs_dir'] = 'K:/MLData/outputs/'
-    else:
-        path = os.path.abspath(os.path.dirname(__file__)) + '/../outputs'
-
     if args.restore is not None:
         identifier = os.path.relpath(
             args.restore,
-            start=path,
+            start=os.path.abspath(os.path.dirname(__file__)) + '/../outputs',
         )
         logger.info('Manually selected folder to restore from: %s' % identifier)
 
@@ -64,9 +59,9 @@ if __name__ == '__main__':
     with tf.Session(config=session_config) as session:
 
         # Declare some parameters
-        batch_size = gaga_config['batch_size']
-        learning_rate = gaga_config['learning_rate']
-        data_to_retrieve = ['left-eye', 'right-eye', 'gaze', 'head']  # Available are: left-eye
+        batch_size = google_config['batch_size']
+        learning_rate = google_config['learning_rate']
+        data_to_retrieve = [google_config['eye_patch'], 'gaze', 'head']  # Available are: left-eye
                                                          #                right-eye
                                                          #                eye-region
                                                          #                face
@@ -76,8 +71,8 @@ if __name__ == '__main__':
 
         # Define model
         from datasources import HDF5Source
-        from models.gaganet import GaGaJ, GaGaZs
-        model = GaGaZs(
+        from models.googlenet import GoogLeNet
+        model = GoogLeNet(
             # Tensorflow session
             # Note: The same session must be used for the model and the data sources.
             session,
@@ -94,13 +89,13 @@ if __name__ == '__main__':
             # the `loss_terms` output of `BaseModel::build_model`.
             learning_schedule=[
                 {
-                    'loss_terms_to_optimize': gaga_config['loss_terms'],
-                    'metrics': gaga_config['metrics'],
+                    'loss_terms_to_optimize': google_config['loss_terms'],
+                    'metrics': google_config['metrics'],
                     'learning_rate': learning_rate,
                 },
             ],
 
-            test_losses_or_metrics=[gaga_config['loss_terms'][0], gaga_config['metrics'][0]],
+            test_losses_or_metrics=[google_config['loss_terms'][0], google_config['metrics'][0]],
 
             # Data sources for training and testing.
             train_data={
@@ -108,6 +103,7 @@ if __name__ == '__main__':
                     session,
                     batch_size,
                     hdf_path=dataconfig['train_data'],
+                    use_colour=True,
                     entries_to_use=data_to_retrieve,
                     min_after_dequeue=2000,
                     data_format='NCHW',
@@ -120,6 +116,7 @@ if __name__ == '__main__':
                     session,
                     batch_size,
                     hdf_path=dataconfig['val_data'],
+                    use_colour=True,
                     entries_to_use=data_to_retrieve,
                     testing=True,
                     num_threads=2,
@@ -142,6 +139,7 @@ if __name__ == '__main__':
                 session,
                 batch_size,
                 hdf_path=dataconfig['test_data'],
+                use_colour=True,
                 entries_to_use=[k for k in data_to_retrieve if k != 'gaze'],
                 testing=True,
                 num_threads=1,

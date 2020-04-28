@@ -44,7 +44,7 @@ class GaGaJ(BaseModel):
             use_batch_statistics_at_test = use_batch_statistics_at_test, 
             identifier = identifier
             )
-        self.next_step_to_reduce_lr = gaga_config['reduce_lr_after_steps']
+        self.lr_reductions = 0
 
 
     def build_model(self, data_sources: Dict[str, BaseDataSource], mode: str):
@@ -153,9 +153,10 @@ class GaGaJ(BaseModel):
         return {'gaze': out}, loss_terms, metrics
 
     def train_loop_post(self, current_step):
-        if current_step > self.next_step_to_reduce_lr:
-            self._learning_rate = gaga_config['lr_multiplier_gain'] * self._learning_rate
-            self.next_step_to_reduce_lr += gaga_config['reduce_lr_after_steps']
+        if self.lr_reductions < gaga_config['nr_lr_reductions']:
+            if current_step > gaga_config['apply_lr_reductions_at'][self.lr_reductions]:
+                self._learning_rate = gaga_config['lr_reductions'][self.lr_reductions] * self._learning_rate
+                self.lr_reductions += 1
 
     def start_training(self):
         self.train(
@@ -184,7 +185,7 @@ class GaGaZs(BaseModel):
             use_batch_statistics_at_test = use_batch_statistics_at_test, 
             identifier = identifier
             )
-        self.next_step_to_reduce_lr = gaga_config['reduce_lr_after_steps']
+        self.lr_reductions = 0
 
 
     def build_model(self, data_sources: Dict[str, BaseDataSource], mode: str):
@@ -291,9 +292,10 @@ class GaGaZs(BaseModel):
         return {'gaze': out}, loss_terms, metrics
 
     def train_loop_post(self, current_step):
-        if current_step > self.next_step_to_reduce_lr:
-            self._learning_rate = gaga_config['lr_multiplier_gain'] * self._learning_rate
-            self.next_step_to_reduce_lr += gaga_config['reduce_lr_after_steps']
+        if self.lr_reductions < gaga_config['nr_lr_reductions']:
+            if current_step > gaga_config['apply_lr_reductions_at'][self.lr_reductions]:
+                self._learning_rate = gaga_config['lr_reductions'][self.lr_reductions] * self._learning_rate
+                self.lr_reductions += 1
 
     def start_training(self):
         self.train(

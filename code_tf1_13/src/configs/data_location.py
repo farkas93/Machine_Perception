@@ -12,3 +12,6 @@ dataconfig['location'] = dataconfig['leonhard']
 dataconfig['train_data'] = dataconfig['location'] + 'mp20_train.h5'
 dataconfig['test_data'] = dataconfig['location'] + 'mp20_test_students.h5'
 dataconfig['val_data'] = dataconfig['location'] + 'mp20_validation.h5'
+
+dataconfig['output_local'] = False
+dataconfig['outputs_dir'] = 'K:/MLData/outputs/' #zspath = 'K:/MLData/outputs/'
