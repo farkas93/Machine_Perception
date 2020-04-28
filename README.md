@@ -2,4 +2,7 @@
 
 Note: Add all datasets in a `/datasets` folder
 
-TODO Add a README.md
+
+
+## References
+[Full-Face Appearance-Based Gaze Estimation](http://openaccess.thecvf.com/content_cvpr_2017_workshops/w41/papers/Bulling_Its_Written_All_CVPR_2017_paper.pdf)
