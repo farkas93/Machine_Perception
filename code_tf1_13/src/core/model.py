@@ -25,6 +25,7 @@ from .live_tester import LiveTester
 from .time_manager import TimeManager
 from .summary_manager import SummaryManager
 from .checkpoint_manager import CheckpointManager
+from configs.data_location import dataconfig
 import logging
 logger = logging.getLogger(__name__)
 
@@ -157,8 +158,13 @@ class BaseModel(object):
     @property
     def output_path(self):
         """Path to store logs and model weights into."""
-        return '%s/%s' % (os.path.abspath(os.path.dirname(__file__) + '/../../outputs'),
-                          self.identifier)
+        
+        if dataconfig['output_local']:
+            path = dataconfig['outputs_dir']
+        else:
+            path = os.path.abspath(os.path.dirname(__file__)) + '/../../outputs'
+
+        return '%s/%s' % (path, self.identifier)
 
     def _build_all_models(self):
         """Build training (GPU/CPU) and testing (CPU) streams."""

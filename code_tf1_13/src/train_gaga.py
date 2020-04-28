@@ -41,10 +41,15 @@ if __name__ == '__main__':
 
     # Set identifier to that provided, and restore weights from there
     identifier = None
+    if dataconfig['output_local']:
+        path = dataconfig['outputs_dir'] = 'K:/MLData/outputs/'
+    else:
+        path = os.path.abspath(os.path.dirname(__file__)) + '/../outputs'
+
     if args.restore is not None:
         identifier = os.path.relpath(
             args.restore,
-            start=os.path.abspath(os.path.dirname(__file__)) + '/../outputs',
+            start=path,
         )
         logger.info('Manually selected folder to restore from: %s' % identifier)
 
