@@ -71,8 +71,8 @@ if __name__ == '__main__':
 
         # Define model
         from datasources import HDF5Source
-        from models.resnet import ResNet
-        model = ResNet(
+        from models.resnet import ResNet, ResNet50, ResNet101, ResNet152
+        model = ResNet50(
             # Tensorflow session
             # Note: The same session must be used for the model and the data sources.
             session,
