@@ -464,4 +464,9 @@ class BaseModel(object):
         # Write predictions to file
         output_file = '%s/predictions_to_upload_%d.txt.gz' % (self.output_path, time.time())
         np.savetxt(output_file, np.array(predictions))
-        logger.info('Created submission at %s' % os.path.relpath(output_file))
+        try:
+            logger.info('Created submission at %s' % os.path.relpath(output_file))
+        except:
+            print("CHECK IF dataconfig['output_local'] IS SET TO TRUE.")
+            print("IF IT IS TRUE, EVERYTHING IS FINE.")
+            print("ELSE YOU'VE GOT AN ERROR AND IT SUCKS...")

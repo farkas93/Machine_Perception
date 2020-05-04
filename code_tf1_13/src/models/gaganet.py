@@ -209,7 +209,7 @@ class GaGaZs(BaseModel):
                                 kernel_size=gaga_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
-                                activation='relu',
+                                activation=None,
                                 name='conv2d')(left) 
                     else:
                         for j in range(3):
@@ -218,9 +218,12 @@ class GaGaZs(BaseModel):
                                 kernel_size=gaga_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
-                                activation='relu',
+                                activation=None,
                                 name='conv2d')(left)
                 
+                if i == 4:
+                    left = tf.keras.layers.BatchNormalization(axis=1)(left) 
+                left = tf.keras.layers.Activation('relu')(left)   
                 # Apply pooling layer after each sequence of convolution layers
                 left = tf.keras.layers.MaxPooling2D(pool_size=gaga_config['pool_size'][i], 
                                             data_format='channels_first',
@@ -240,7 +243,7 @@ class GaGaZs(BaseModel):
                                 kernel_size=gaga_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
-                                activation='relu',
+                                activation=None,
                                 name='conv2d')(right) 
                     else:
                         for j in range(3):
@@ -249,10 +252,13 @@ class GaGaZs(BaseModel):
                                 kernel_size=gaga_config['filter_size'][i],
                                 padding = 'same',
                                 data_format='channels_first',
-                                activation='relu',
+                                activation=None,
                                 name='conv2d')(right)
                 
                 # Apply pooling layer after each sequence of convolution layers
+                if i == 4:
+                    right = tf.keras.layers.BatchNormalization(axis=1)(right)   
+                right = tf.keras.layers.Activation('relu')(right)   
                 right = tf.keras.layers.MaxPooling2D(pool_size=gaga_config['pool_size'][i], 
                                             data_format='channels_first',
                                             strides=gaga_config['strides'][i])(right)
@@ -269,7 +275,9 @@ class GaGaZs(BaseModel):
             injected_layer = tf.keras.layers.concatenate([left_flat, right_flat, input_tensors['head']], axis=1)
 
             # FC layers           
-            fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)             
+            fc1_layer = tf.keras.layers.Dense(units=8192, activation=None, name='fc1')(injected_layer)
+            fc1_layer = tf.keras.layers.BatchNormalization(axis=1)(fc1_layer)
+            fc1_layer = tf.keras.layers.Activation('relu')(fc1_layer)        
             fc1_layer = tf.keras.layers.Dropout(rate=0.5, seed=gaga_config['dropout_seed'])(fc1_layer, self.is_training)       
 
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)

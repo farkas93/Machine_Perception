@@ -1,16 +1,3 @@
-"""Copyright (c) 2020 AIT Lab, ETH Zurich
-
-Students and holders of copies of this code, accompanying datasets,
-and documentation, are not allowed to copy, distribute or modify
-any of the mentioned materials beyond the scope and duration of the
-Machine Perception course projects.
-
-That is, no partial/full copy nor modification of this code and
-accompanying data should be made publicly or privately available to
-current/future students or other parties.
-"""
-
-"""Example architecture."""
 from typing import Dict
 
 import tensorflow as tf
@@ -27,6 +14,9 @@ from typing import Any, Dict, List
 from configs.google_config import config
 from util.pool_helper import PoolHelper
 from util.lrn import LRN
+
+import logging
+logger = logging.getLogger(__name__)
 
 class GoogLeNet(BaseModel):
     """An example neural network architecture."""
@@ -48,7 +38,7 @@ class GoogLeNet(BaseModel):
             use_batch_statistics_at_test = use_batch_statistics_at_test, 
             identifier = identifier
             )
-        self.next_step_to_reduce_lr = config['reduce_lr_after_steps']
+        self.lr_reductions = 0
 
 
     def build_model(self, data_sources: Dict[str, BaseDataSource], mode: str):
@@ -213,7 +203,14 @@ class GoogLeNet(BaseModel):
             
 
         with tf.variable_scope('Final_Output'):
-            output = Concatenate(axis=1, name='final_output')([loss1_classifier,loss2_classifier,loss3_classifier])
+            output = Concatenate(axis=1, name='concat_output1')([loss1_classifier,loss2_classifier])            
+            output = Dense(1000, name='concat_picker1', kernel_regularizer=l2(0.0002))(output) 
+            output = tf.keras.layers.BatchNormalization(axis=1)(output)
+            output = Dropout(rate=0.6)(output)
+            output = Concatenate(axis=1, name='concat_output2')([output,loss3_classifier, input_tensors['head'] ])
+            output = Dense(1000, name='concat_picker2', kernel_regularizer=l2(0.0002))(output) 
+            output = tf.keras.layers.BatchNormalization(axis=1)(output)
+            output = Dropout(rate=0.2)(output)
             output = Dense(units=2, activation=None, name='loss3/classifier_out')(output)
             self.summary.histogram('output_layer/activations', output)
 
@@ -228,11 +225,12 @@ class GoogLeNet(BaseModel):
             with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
                 metrics[config['metrics'][0]] = util.gaze.tensorflow_angular_error_from_pitchyaw(output, y)
         return {'gaze': output}, loss_terms, metrics
-
+   
     def train_loop_post(self, current_step):
-        if current_step > self.next_step_to_reduce_lr:
-            self._learning_rate = config['lr_multiplier_gain'] * self._learning_rate
-            self.next_step_to_reduce_lr += config['reduce_lr_after_steps']
+        if self.lr_reductions < config['nr_lr_reductions']:
+            if current_step > config['apply_lr_reductions_at'][self.lr_reductions]:
+                self._learning_rate = config['lr_reductions'][self.lr_reductions] * self._learning_rate
+                self.lr_reductions += 1
 
     def start_training(self):
         self.train(

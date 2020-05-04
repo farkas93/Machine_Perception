@@ -6,9 +6,9 @@ gaga_config['batch_size'] = 16
 gaga_config['learning_rate'] = 1e-4
 
 #LR stuff
-gaga_config['nr_lr_reductions'] = 3
-gaga_config['lr_reductions'] = [0.001, 0.1, 0.1]
-gaga_config['apply_lr_reductions_at'] =  [40250, 90000, 110000]
+gaga_config['nr_lr_reductions'] = 4
+gaga_config['lr_reductions'] = [0.1, 0.01, 0.1, 0.1]
+gaga_config['apply_lr_reductions_at'] =  [21000, 40250, 90000, 110000]
 
 
 gaga_config['loss_terms'] = ['gaze_mse']
