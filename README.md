@@ -10,3 +10,6 @@ Note: Add all datasets in a `/datasets` folder
 [MPIIGaze: Real-World Dataset and Deep Appearance-Based Gaze Estimation](https://arxiv.org/pdf/1711.09017.pdf)
 
 [ResNet-34](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf)
+
+[DenseNet](https://arxiv.org/pdf/1608.06993.pdf)
+
