@@ -10,7 +10,7 @@ densenet_config['metrics'] = ['gaze_angular']
 
 densenet_config['growth_rate'] = 12
 densenet_config['n_filters'] = 32
-densenet_config['n_dense_blocks'] = [6, 12, 24, 16] # Densenet-121
+# densenet_config['n_dense_blocks'] = [6, 12, 24, 16] # Densenet-121
 # densenet_config['n_dense_blocks'] = [6, 12, 32, 32] # Densenet-169
 # densenet_config['n_dense_blocks'] = [6, 12, 48, 32] # Densenet-201
-# densenet_config['n_dense_blocks'] = [6, 12, 64, 48] # Densenet-264
+densenet_config['n_dense_blocks'] = [6, 12, 64, 48] # Densenet-264
