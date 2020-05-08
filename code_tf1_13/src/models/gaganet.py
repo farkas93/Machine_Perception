@@ -275,13 +275,12 @@ class GaGaZs(BaseModel):
             injected_layer = tf.keras.layers.concatenate([left_flat, right_flat, input_tensors['head']], axis=1)
 
             # FC layers           
-            fc1_layer = tf.keras.layers.Dense(units=8192, activation=None, name='fc1')(injected_layer)
-            fc1_layer = tf.keras.layers.BatchNormalization(axis=1)(fc1_layer)
-            fc1_layer = tf.keras.layers.Activation('relu')(fc1_layer)        
-            fc1_layer = tf.keras.layers.Dropout(rate=0.5, seed=gaga_config['dropout_seed'])(fc1_layer, self.is_training)       
+            fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)      
+            fc1_layer = tf.keras.layers.Dropout(rate=0.4, seed=gaga_config['dropout_seed'])(fc1_layer, self.is_training)       
 
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
-            self.summary.histogram('fc2/activations', fc2_layer)
+            fc3_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc3')(fc2_layer)
+            self.summary.histogram('fc3/activations', fc3_layer)
 
             # Directly regress two polar angles for gaze direction            
             out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc2_layer)
