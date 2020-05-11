@@ -21,6 +21,8 @@ import tensorflow as tf
 
 from core import BaseDataSource
 
+import random
+from random import randint
 
 class HDF5Source(BaseDataSource):
     """HDF5 data loading class (using h5py)."""
@@ -33,6 +35,9 @@ class HDF5Source(BaseDataSource):
                  keys_to_use: List[str]=None,
                  entries_to_use: List[str]=None,
                  testing=False,
+                 augmentation=False,
+                 brightness=(0,0),
+                 saturation=(0,0),
                  **kwargs):
         """Create queues and threads to read and preprocess data from specified keys."""
         hdf5 = h5py.File(hdf_path, 'r')
@@ -62,11 +67,15 @@ class HDF5Source(BaseDataSource):
         self._hdf5 = hdf5
         self._mutex = Lock()
         self._current_index = 0
+        self._use_data_augmentation = augmentation
+        self._brightness = brightness
+        self._saturation = saturation
         super().__init__(tensorflow_session, batch_size=batch_size, testing=testing, **kwargs)
 
         # Set index to 0 again as base class constructor called HDF5Source::entry_generator once to
         # get preprocessed sample.
         self._current_index = 0
+        random.seed(420)            # Fixed random seed to make it reproducible
 
     @property
     def num_entries(self):
@@ -115,6 +124,36 @@ class HDF5Source(BaseDataSource):
         """Normalize image intensities."""
         for k, v in entry.items():
             if v.ndim == 3:  # We get histogram-normalized BGR inputs
+                if self._use_data_augmentation:
+                    # brightness change for image augmentation
+                    hsv = cv.cvtColor(v, cv.COLOR_BGR2HSV)
+                    h, s, val = cv.split(hsv)
+                    if self._brightness is not (0,0):
+                        update = randint(self._brightness[0], self._brightness[1])     # (-100, 200)
+                        if update >= 0:
+                            limit = 255 - update
+                            val[val > limit] = 255
+                            val[val <= limit] += update
+                        else:
+                            update = -1 * update
+                            limit = 0 + update
+                            val[val <= limit] = 0
+                            val[val > limit] -= update
+
+                    if self._saturation is not (0,0):
+                        update = randint(self._saturation[0], self._saturation[1])     # less then 255 to make it less extreme (maybe -100 to darken image could be too much)
+                        if update >= 0:
+                            limit = 255 - update
+                            s[s > limit] = 255
+                            s[s <= limit] += update
+                        else:
+                            update = -1 * update
+                            limit = 0 + update
+                            s[s <= limit] = 0
+                            s[s > limit] -= update
+                    hsv = cv.merge((h, s, val))
+                    v = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)                
+
                 if not self._use_colour:
                     v = cv.cvtColor(v, cv.COLOR_BGR2GRAY)
                 v = v.astype(np.float32)
