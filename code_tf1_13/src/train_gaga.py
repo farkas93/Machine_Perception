@@ -47,10 +47,13 @@ if __name__ == '__main__':
         path = os.path.abspath(os.path.dirname(__file__)) + '/../outputs'
 
     if args.restore is not None:
-        identifier = os.path.relpath(
-            args.restore,
-            start=path,
-        )
+        if dataconfig['output_local']:
+            identifier = args.restore
+        else:
+            identifier = os.path.relpath(
+                args.restore,
+                start=path,
+            )
         logger.info('Manually selected folder to restore from: %s' % identifier)
 
     # Initialize Tensorflow session
