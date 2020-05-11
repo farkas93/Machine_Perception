@@ -195,6 +195,10 @@ class GaGaZs(BaseModel):
         left = tf.keras.backend.cast(input_tensors['left-eye'], dtype = tf.float32)
         right = tf.keras.backend.cast(input_tensors['right-eye'], dtype = tf.float32)
 
+        # Induce Noise better generalisation
+        left = tf.keras.layers.GaussianNoise(stddev=gaga_config['noise_std'])(left)
+        right = tf.keras.layers.GaussianNoise(stddev=gaga_config['noise_std'])(right)
+
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
         with tf.variable_scope('conv_left'):
@@ -257,9 +261,9 @@ class GaGaZs(BaseModel):
                 
                 # Apply pooling layer after each sequence of convolution layers
                 if i == 4:
-                    right = tf.keras.layers.BatchNormalization(axis=1)(right)   
-                right = tf.keras.layers.Activation('relu')(right)   
-                right = tf.keras.layers.MaxPooling2D(pool_size=gaga_config['pool_size'][i], 
+                    right = tf.keras.layers.BatchNormalization(axis=1)(right)
+                right = tf.keras.layers.Activation('relu')(right)
+                right = tf.keras.layers.MaxPooling2D(pool_size=gaga_config['pool_size'][i],
                                             data_format='channels_first',
                                             strides=gaga_config['strides'][i])(right)
 
@@ -276,14 +280,14 @@ class GaGaZs(BaseModel):
 
             # FC layers           
             fc1_layer = tf.keras.layers.Dense(units=8192, activation='relu', name='fc1')(injected_layer)      
-            fc1_layer = tf.keras.layers.Dropout(rate=0.4, seed=gaga_config['dropout_seed'])(fc1_layer, self.is_training)       
+            fc1_layer = tf.keras.layers.Dropout(rate=0.6, seed=gaga_config['dropout_seed'])(fc1_layer, self.is_training)       
 
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
             fc3_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc3')(fc2_layer)
             self.summary.histogram('fc3/activations', fc3_layer)
 
             # Directly regress two polar angles for gaze direction            
-            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc2_layer)
+            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc3_layer)
             self.summary.histogram('output_layer/activations', out)
 
         # Define outputs
