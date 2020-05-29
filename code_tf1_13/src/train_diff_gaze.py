@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 from configs.data_location import dataconfig
 
-from configs.diff_gazenet_config import net_config
+from configs.diff_gazenet_config import config as net_config
 
 if __name__ == '__main__':
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
                                                          #                face-landmarks
 
         # Define model
-        from datasources import HDF5Source
+        from datasources import HDF5DiffSource as HDF5Source
         from models.gazenet import GazeNet
         model = GazeNet(
             # Tensorflow session

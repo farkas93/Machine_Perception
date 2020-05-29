@@ -12,6 +12,7 @@ current/future students or other parties.
 
 """Exported classes and methods for core package."""
 from .data_source import BaseDataSource
+from .diff_data_source import DiffBaseDataSource
 from .model import BaseModel
 from .live_tester import LiveTester
 from .time_manager import TimeManager

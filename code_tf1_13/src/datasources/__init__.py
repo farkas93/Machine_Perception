@@ -12,5 +12,6 @@ current/future students or other parties.
 
 """Data-source definitions (one class per file)."""
 from .hdf5 import HDF5Source
+from .hdf5_diff import HDF5DiffSource
 from .unityeyes import UnityEyes
 __all__ = ('HDF5Source', 'UnityEyes')

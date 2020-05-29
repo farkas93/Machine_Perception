@@ -19,12 +19,12 @@ import h5py
 import numpy as np
 import tensorflow as tf
 
-from core import BaseDataSource
+from core import DiffBaseDataSource
 
 import random
 from random import randint
 
-class HDF5DiffSource(BaseDataSource):
+class HDF5DiffSource(DiffBaseDataSource):
     """HDF5 data loading class (using h5py)."""
 
     def __init__(self,
@@ -59,7 +59,9 @@ class HDF5DiffSource(BaseDataSource):
             n = next(iter(hdf5[key].values())).shape[0]
             for i in range(n):
                 self._index_to_key[index_counter] = (key, i)
-                serlf._count_per_person[key] += 1
+                if key not in self._count_per_person:
+                    self._count_per_person[key] = 0
+                self._count_per_person[key] += 1
                 index_counter += 1
         self._num_entries = index_counter
 
@@ -102,7 +104,7 @@ class HDF5DiffSource(BaseDataSource):
             super().reset()
             self._current_index = 0
 
-    # Returns a tuple of images from the same person
+    # Returns a list of images from the same person (testing - 1 test image, and n reference images; training 1 train image and 1 random image)
     def entry_generator(self, yield_just_one=False):
         """Read entry from HDF5."""
         try:
@@ -120,17 +122,17 @@ class HDF5DiffSource(BaseDataSource):
                 data = self._hdf5[key]
                 entry = {}
 
-                if testing:
+                if self.testing:
                     # Only use the same first few images as reference set
-                    entry['left-eye'] = (data['left-eye'][index, :], [])
-                    entry['gaze'] = data['gaze'][index, :]
+                    entry['left-eye'] = np.array([data['left-eye'][index, :], np.array([])])
+                    entry['gaze'] = np.array([data['gaze'][index, :], np.array([])])
                     for i in range(self._n_ref_images):
                         entry['left-eye'][1].append(data['left-eye'][i, :])
                         entry['gaze'][1].append(data['gaze'][i, :])
                 else:
                     rand_index = randint(0, self._count_per_person[key])
-                    entry['left-eye'] = (data['left-eye'][index, :], data['left-eye'][rand_index, :])
-                    entry['gaze'] = (data['gaze'][index, :], data['gaze'][rand_index, :])                
+                    entry['left-eye'] = np.array([data['left-eye'][index, :], data['left-eye'][rand_index, :]])
+                    entry['gaze'] = np.array([data['gaze'][index, :], data['gaze'][rand_index, :]])                
                 
                 yield entry
         finally:
@@ -139,8 +141,9 @@ class HDF5DiffSource(BaseDataSource):
 
     def preprocess_entry(self, entry):
         """Normalize image intensities."""
-        if testing:
-            v = entry['left-eye'][0]
+        if self.testing:
+            lst = entry['left-eye']
+            v = lst[0]
             if v.ndim == 3:  # We get histogram-normalized BGR inputs
                 if self._use_data_augmentation:
                     # brightness change for image augmentation
@@ -181,9 +184,9 @@ class HDF5DiffSource(BaseDataSource):
                     v = np.transpose(v, [2, 0, 1])
                 elif not self._use_colour:
                     v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
-                entry['left-eye'][0] = v
+                lst[0] = v
 
-            for i, v in enumerate(entry['left-eye'][1]):
+            for i, v in enumerate(lst[1]):
                 if v.ndim == 3:  # We get histogram-normalized BGR inputs
                     if self._use_data_augmentation:
                         # brightness change for image augmentation
@@ -224,9 +227,11 @@ class HDF5DiffSource(BaseDataSource):
                         v = np.transpose(v, [2, 0, 1])
                     elif not self._use_colour:
                         v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
-                    entry['left-eye'][1][i] = v
+                    lst[1][i] = v
+            entry['left-eye'] = lst
         else:
-            for i, v in enumerate(entry['left-eye']):
+            lst = list(entry['left-eye'])
+            for i, v in enumerate(lst):
                 if v.ndim == 3:  # We get histogram-normalized BGR inputs
                     if self._use_data_augmentation:
                         # brightness change for image augmentation
@@ -267,10 +272,19 @@ class HDF5DiffSource(BaseDataSource):
                         v = np.transpose(v, [2, 0, 1])
                     elif not self._use_colour:
                         v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
-                    entry['left-eye'][i] = v
+                    lst[i] = v
+            entry['left-eye'] = lst
 
         # Ensure all values in an entry are 4-byte floating point numbers
-        for key, value in entry.items():
-            entry[key] = value.astype(np.float32)
+        if self.testing:
+            for key, value in entry.items():
+                entry[key][0] = value[0].astype(np.float32)
+                for i, n in enumerate(value[1]):
+                    entry[key][1][i] = n.astype(np.float32)
+            
+        else:
+            for key, value in entry.items():
+                for i, n in enumerate(value):
+                    entry[key][i] = n.astype(np.float32)
 
         return entry
