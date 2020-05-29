@@ -116,6 +116,8 @@ if __name__ == '__main__':
                     data_format='NCHW',
                     shuffle=True,
                     staging=True,
+                    augmentation=True,
+                    brightness=(-100, 200)
                 ),
             },
             test_data={

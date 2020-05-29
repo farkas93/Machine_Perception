@@ -283,11 +283,11 @@ class GaGaZs(BaseModel):
             fc1_layer = tf.keras.layers.Dropout(rate=0.6, seed=gaga_config['dropout_seed'])(fc1_layer, self.is_training)       
 
             fc2_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc2')(fc1_layer)
-            fc3_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc3')(fc2_layer)
-            self.summary.histogram('fc3/activations', fc3_layer)
+            #fc3_layer = tf.keras.layers.Dense(units=4096, activation='relu', name='fc3')(fc2_layer)
+            self.summary.histogram('fc2/activations', fc2_layer)
 
             # Directly regress two polar angles for gaze direction            
-            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc3_layer)
+            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc2_layer)
             self.summary.histogram('output_layer/activations', out)
 
         # Define outputs
