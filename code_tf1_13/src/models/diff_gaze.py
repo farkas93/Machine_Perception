@@ -22,7 +22,7 @@ import util.gaze
 
 from typing import Any, Dict, List
 
-from configs.diff_gazenet_config import net_config
+from configs.diff_gazenet_config import config as net_config
 
 class DiffGazeNet(BaseModel):
     """An example neural network architecture."""
@@ -81,14 +81,14 @@ class DiffGazeNet(BaseModel):
         #TODO: Rewrite input extraction according to Jans implementation
         data_source = next(iter(data_sources.values()))
         input_tensors = data_source.output_tensors
-        x = tf.keras.backend.cast(input_tensors[net_config['eye_patch']], dtype = tf.float32)
+        x = tf.keras.backend.cast(input_tensors[str(0)], dtype = tf.float32)
 
         #Downscale input so sizes are approximately the same as in the GazeNet paper
         x = tf.keras.layers.MaxPooling2D(pool_size=2, 
                                     data_format='channels_first',
                                     strides=2)(x)
 
-        diff_x = x #set here a random same eye patch
+        diff_x = tf.keras.backend.cast(input_tensors[str(1)], dtype = tf.float32)
 
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
@@ -123,8 +123,15 @@ class DiffGazeNet(BaseModel):
         # Define outputs
         loss_terms = {}
         metrics = {}
-        if 'gaze' in input_tensors:
-            y = input_tensors['gaze']
+        if str(net_config['n_ref_images'] + 1) in input_tensors:
+            y = input_tensors[str(net_config['n_ref_images'] + 1)]
+            with tf.variable_scope('mse'):  # To optimize
+                # NOTE: You are allowed to change the optimized loss
+                loss_terms[net_config['loss_terms'][0]] = tf.reduce_mean(tf.squared_difference(out, y))
+            with tf.variable_scope('ang'):  # To evaluate in addition to loss terms
+                metrics[net_config['metrics'][0]] = util.gaze.tensorflow_angular_error_from_pitchyaw(out, y)
+        elif str(2) in input_tensors:
+            y = input_tensors[str(2)]
             with tf.variable_scope('mse'):  # To optimize
                 # NOTE: You are allowed to change the optimized loss
                 loss_terms[net_config['loss_terms'][0]] = tf.reduce_mean(tf.squared_difference(out, y))

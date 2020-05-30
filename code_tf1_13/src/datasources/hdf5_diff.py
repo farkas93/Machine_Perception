@@ -19,12 +19,12 @@ import h5py
 import numpy as np
 import tensorflow as tf
 
-from core import DiffBaseDataSource
+from core import BaseDataSource
 
 import random
 from random import randint
 
-class HDF5DiffSource(DiffBaseDataSource):
+class HDF5DiffSource(BaseDataSource):
     """HDF5 data loading class (using h5py)."""
 
     def __init__(self,
@@ -39,6 +39,7 @@ class HDF5DiffSource(DiffBaseDataSource):
                  augmentation=False,
                  brightness=(0,0),
                  saturation=(0,0),
+                 testing_diff=False,
                  **kwargs):
         """Create queues and threads to read and preprocess data from specified keys."""
         hdf5 = h5py.File(hdf_path, 'r')
@@ -75,8 +76,11 @@ class HDF5DiffSource(DiffBaseDataSource):
         self._use_data_augmentation = augmentation
         self._brightness = brightness
         self._saturation = saturation
-        self.testing = testing
-        self._n_ref_images = n_ref_images
+        self._testing_diff = testing_diff
+        if not self._testing_diff:
+            self._n_ref_images = 1
+        else:
+            self._n_ref_images = n_ref_images
         super().__init__(tensorflow_session, batch_size=batch_size, testing=testing, **kwargs)
 
         # Set index to 0 again as base class constructor called HDF5Source::entry_generator once to
@@ -104,7 +108,8 @@ class HDF5DiffSource(DiffBaseDataSource):
             super().reset()
             self._current_index = 0
 
-    # Returns a list of images from the same person (testing - 1 test image, and n reference images; training 1 train image and 1 random image)
+    # Returns an entry with numbers as labels, where 0 is the input image I and 1 to n_ref_images (training: n_ref_images = 1) are the images 
+    # in reference sample. Labels are specified from n_ref_images + 1 to 2 * n_ref_images
     def entry_generator(self, yield_just_one=False):
         """Read entry from HDF5."""
         try:
@@ -122,17 +127,25 @@ class HDF5DiffSource(DiffBaseDataSource):
                 data = self._hdf5[key]
                 entry = {}
 
-                if self.testing:
+                if self._testing_diff:
                     # Only use the same first few images as reference set
-                    entry['left-eye'] = np.array([data['left-eye'][index, :], np.array([])])
-                    entry['gaze'] = np.array([data['gaze'][index, :], np.array([])])
-                    for i in range(self._n_ref_images):
-                        entry['left-eye'][1].append(data['left-eye'][i, :])
-                        entry['gaze'][1].append(data['gaze'][i, :])
+                    # Create entries with number as labels (caution: ordered accordingly to order in self.entries_to_use)
+                    cur_ind = 0
+                    for name in self.entries_to_use:
+                        entry[str(cur_ind)] = data[name][index, :]
+                        for i in range(self._n_ref_images):
+                            cur_ind += 1
+                            entry[str(cur_ind)] = data[name][i, :]
+                        cur_ind += 1                
                 else:
-                    rand_index = randint(0, self._count_per_person[key])
-                    entry['left-eye'] = np.array([data['left-eye'][index, :], data['left-eye'][rand_index, :]])
-                    entry['gaze'] = np.array([data['gaze'][index, :], data['gaze'][rand_index, :]])                
+                    # Generate a random index
+                    rand_index = randint(0, self._count_per_person[key] - 1)
+                    cur_ind = 0
+                    for name in self.entries_to_use:
+                        entry[str(cur_ind)] = data[name][index, :]
+                        cur_ind += 1 
+                        entry[str(cur_ind)] = data[name][rand_index, :]
+                        cur_ind += 1              
                 
                 yield entry
         finally:
@@ -141,9 +154,7 @@ class HDF5DiffSource(DiffBaseDataSource):
 
     def preprocess_entry(self, entry):
         """Normalize image intensities."""
-        if self.testing:
-            lst = entry['left-eye']
-            v = lst[0]
+        for k, v in entry.items():
             if v.ndim == 3:  # We get histogram-normalized BGR inputs
                 if self._use_data_augmentation:
                     # brightness change for image augmentation
@@ -184,107 +195,10 @@ class HDF5DiffSource(DiffBaseDataSource):
                     v = np.transpose(v, [2, 0, 1])
                 elif not self._use_colour:
                     v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
-                lst[0] = v
-
-            for i, v in enumerate(lst[1]):
-                if v.ndim == 3:  # We get histogram-normalized BGR inputs
-                    if self._use_data_augmentation:
-                        # brightness change for image augmentation
-                        hsv = cv.cvtColor(v, cv.COLOR_BGR2HSV)
-                        h, s, val = cv.split(hsv)
-                        if self._brightness is not (0,0):
-                            update = randint(self._brightness[0], self._brightness[1])     # (-100, 200)
-                            if update >= 0:
-                                limit = 255 - update
-                                val[val > limit] = 255
-                                val[val <= limit] += update
-                            else:
-                                update = -1 * update
-                                limit = 0 + update
-                                val[val <= limit] = 0
-                                val[val > limit] -= update
-
-                        if self._saturation is not (0,0):
-                            update = randint(self._saturation[0], self._saturation[1])     # less then 255 to make it less extreme (maybe -100 to darken image could be too much)
-                            if update >= 0:
-                                limit = 255 - update
-                                s[s > limit] = 255
-                                s[s <= limit] += update
-                            else:
-                                update = -1 * update
-                                limit = 0 + update
-                                s[s <= limit] = 0
-                                s[s > limit] -= update
-                        hsv = cv.merge((h, s, val))
-                        v = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)                
-
-                    if not self._use_colour:
-                        v = cv.cvtColor(v, cv.COLOR_BGR2GRAY)
-                    v = v.astype(np.float32)
-                    v *= 2.0 / 255.0
-                    v -= 1.0
-                    if self._use_colour and self.data_format == 'NCHW':
-                        v = np.transpose(v, [2, 0, 1])
-                    elif not self._use_colour:
-                        v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
-                    lst[1][i] = v
-            entry['left-eye'] = lst
-        else:
-            lst = list(entry['left-eye'])
-            for i, v in enumerate(lst):
-                if v.ndim == 3:  # We get histogram-normalized BGR inputs
-                    if self._use_data_augmentation:
-                        # brightness change for image augmentation
-                        hsv = cv.cvtColor(v, cv.COLOR_BGR2HSV)
-                        h, s, val = cv.split(hsv)
-                        if self._brightness is not (0,0):
-                            update = randint(self._brightness[0], self._brightness[1])     # (-100, 200)
-                            if update >= 0:
-                                limit = 255 - update
-                                val[val > limit] = 255
-                                val[val <= limit] += update
-                            else:
-                                update = -1 * update
-                                limit = 0 + update
-                                val[val <= limit] = 0
-                                val[val > limit] -= update
-
-                        if self._saturation is not (0,0):
-                            update = randint(self._saturation[0], self._saturation[1])     # less then 255 to make it less extreme (maybe -100 to darken image could be too much)
-                            if update >= 0:
-                                limit = 255 - update
-                                s[s > limit] = 255
-                                s[s <= limit] += update
-                            else:
-                                update = -1 * update
-                                limit = 0 + update
-                                s[s <= limit] = 0
-                                s[s > limit] -= update
-                        hsv = cv.merge((h, s, val))
-                        v = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)                
-
-                    if not self._use_colour:
-                        v = cv.cvtColor(v, cv.COLOR_BGR2GRAY)
-                    v = v.astype(np.float32)
-                    v *= 2.0 / 255.0
-                    v -= 1.0
-                    if self._use_colour and self.data_format == 'NCHW':
-                        v = np.transpose(v, [2, 0, 1])
-                    elif not self._use_colour:
-                        v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
-                    lst[i] = v
-            entry['left-eye'] = lst
+                entry[k] = v
 
         # Ensure all values in an entry are 4-byte floating point numbers
-        if self.testing:
-            for key, value in entry.items():
-                entry[key][0] = value[0].astype(np.float32)
-                for i, n in enumerate(value[1]):
-                    entry[key][1][i] = n.astype(np.float32)
-            
-        else:
-            for key, value in entry.items():
-                for i, n in enumerate(value):
-                    entry[key][i] = n.astype(np.float32)
+        for key, value in entry.items():
+            entry[key] = value.astype(np.float32)
 
         return entry

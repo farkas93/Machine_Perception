@@ -61,17 +61,18 @@ if __name__ == '__main__':
         # Declare some parameters
         batch_size = net_config['batch_size']
         learning_rate = net_config['learning_rate']
-        data_to_retrieve = [net_config['eye_patch'], 'gaze', 'head']  # Available are: left-eye
-                                                         #                right-eye
-                                                         #                eye-region
-                                                         #                face
-                                                         #                gaze (required)
-                                                         #                head
-                                                         #                face-landmarks
+        data_to_retrieve = [net_config['eye_patch'], 'gaze']  
+                                                        # Available are: left-eye
+                                                        #                right-eye
+                                                        #                eye-region
+                                                        #                face
+                                                        #                gaze (required)
+                                                        #                head
+                                                        #                face-landmarks
 
         # Define model
         from datasources import HDF5DiffSource as HDF5Source
-        from models.gazenet import GazeNet
+        from models.diff_gaze import DiffGazeNet as GazeNet
         model = GazeNet(
             # Tensorflow session
             # Note: The same session must be used for the model and the data sources.
@@ -117,8 +118,10 @@ if __name__ == '__main__':
                     hdf_path=dataconfig['val_data'],
                     entries_to_use=data_to_retrieve,
                     testing=True,
+                    n_ref_images=net_config['n_ref_images'],
                     num_threads=2,
                     data_format='NCHW',
+                    testing_diff=True
                 ),
             },
 
@@ -139,6 +142,7 @@ if __name__ == '__main__':
                 hdf_path=dataconfig['test_data'],
                 entries_to_use=[k for k in data_to_retrieve if k != 'gaze'],
                 testing=True,
+                n_ref_images=1,
                 num_threads=1,
                 data_format='NCHW',
             )
