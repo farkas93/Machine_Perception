@@ -104,6 +104,7 @@ if __name__ == '__main__':
                     session,
                     batch_size,
                     hdf_path=dataconfig['train_data'],
+                    hdf_path_ref=dataconfig['train_data'],
                     entries_to_use=data_to_retrieve,
                     min_after_dequeue=2000,
                     data_format='NCHW',
@@ -116,12 +117,12 @@ if __name__ == '__main__':
                     session,
                     batch_size,
                     hdf_path=dataconfig['val_data'],
+                    hdf_path_ref=dataconfig['train_data'],
                     entries_to_use=data_to_retrieve,
                     testing=True,
                     n_ref_images=net_config['n_ref_images'],
                     num_threads=2,
                     data_format='NCHW',
-                    testing_diff=True
                 ),
             },
 
@@ -140,9 +141,10 @@ if __name__ == '__main__':
                 session,
                 batch_size,
                 hdf_path=dataconfig['test_data'],
+                hdf_path_ref=dataconfig['train_data'],
                 entries_to_use=[k for k in data_to_retrieve if k != 'gaze'],
                 testing=True,
-                n_ref_images=1,
+                n_ref_images=net_config['n_ref_images'],
                 num_threads=1,
                 data_format='NCHW',
             )

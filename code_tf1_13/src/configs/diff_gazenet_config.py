@@ -8,8 +8,8 @@ config['reduce_lr_after_steps'] = 20000
 config['lr_multiplier_gain'] = 0.1
 config['dropout_seed'] = 5
 config['eye_patch'] = 'left-eye' #'right-eye', 'eye-region'
-config['loss_terms'] = ['gaze_mse']
-config['metrics'] = ['gaze_angular']
+config['loss_terms'] = ['L_diff']
+config['metrics'] = ['gaze_angular', 'gaze_mse']
 
 config['n_ref_images'] = 10
 

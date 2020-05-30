@@ -31,21 +31,26 @@ class HDF5DiffSource(BaseDataSource):
                  tensorflow_session: tf.Session,
                  batch_size: int,
                  hdf_path: str,
+                 hdf_path_ref: str,
                  use_colour: bool=False,
                  keys_to_use: List[str]=None,
                  entries_to_use: List[str]=None,
                  testing=False,
-                 n_ref_images=10,
+                 n_ref_images=0,
                  augmentation=False,
                  brightness=(0,0),
                  saturation=(0,0),
-                 testing_diff=False,
                  **kwargs):
         """Create queues and threads to read and preprocess data from specified keys."""
         hdf5 = h5py.File(hdf_path, 'r')
         self._short_name = 'HDF:%s' % '/'.join(hdf_path.split('/')[-2:])
         if testing:
             self._short_name += ':test'
+
+        hdf5_ref = h5py.File(hdf_path_ref, 'r')
+        self._short_name_ref = 'HDF:%s' % '/'.join(hdf_path_ref.split('/')[-2:])
+        if testing:
+            self._short_name_ref += ':test'
 
         # Cache other settings
         self._use_colour = use_colour
@@ -66,9 +71,14 @@ class HDF5DiffSource(BaseDataSource):
                 index_counter += 1
         self._num_entries = index_counter
 
+        self._ref_key = list(hdf5_ref.keys())[0]
+
         if entries_to_use is None:  # use all available input data if not specified
             entries_to_use = list(next(iter(hdf5.values())).keys())
         self.entries_to_use = entries_to_use
+
+        self._hdf5_ref = hdf5_ref
+        self._current_ref_index = 0
 
         self._hdf5 = hdf5
         self._mutex = Lock()
@@ -76,16 +86,13 @@ class HDF5DiffSource(BaseDataSource):
         self._use_data_augmentation = augmentation
         self._brightness = brightness
         self._saturation = saturation
-        self._testing_diff = testing_diff
-        if not self._testing_diff:
-            self._n_ref_images = 1
-        else:
-            self._n_ref_images = n_ref_images
+        self._n_ref_images = n_ref_images
         super().__init__(tensorflow_session, batch_size=batch_size, testing=testing, **kwargs)
 
         # Set index to 0 again as base class constructor called HDF5Source::entry_generator once to
         # get preprocessed sample.
         self._current_index = 0
+        self._current_ref_index = 0
         random.seed(420)            # Fixed random seed to make it reproducible
 
     @property
@@ -107,6 +114,7 @@ class HDF5DiffSource(BaseDataSource):
         with self._mutex:
             super().reset()
             self._current_index = 0
+            self._current_ref_index = 0
 
     # Returns an entry with numbers as labels, where 0 is the input image I and 1 to n_ref_images (training: n_ref_images = 1) are the images 
     # in reference sample. Labels are specified from n_ref_images + 1 to 2 * n_ref_images
@@ -120,32 +128,31 @@ class HDF5DiffSource(BaseDataSource):
                             break
                         else:
                             self._current_index = 0
+                    current_ref_index = self._current_ref_index
                     current_index = self._current_index
-                    self._current_index += 1
+                    if current_ref_index >= self._n_ref_images:
+                        self._current_ref_index = 0
+                        self._current_index += 1
+                    else:
+                        self._current_ref_index += 1
 
                 key, index = self._index_to_key[current_index]
                 data = self._hdf5[key]
+                data_ref = self._hdf5_ref[self._ref_key]
                 entry = {}
 
-                if self._testing_diff:
+                if self.testing:
                     # Only use the same first few images as reference set
                     # Create entries with number as labels (caution: ordered accordingly to order in self.entries_to_use)
-                    cur_ind = 0
                     for name in self.entries_to_use:
-                        entry[str(cur_ind)] = data[name][index, :]
-                        for i in range(self._n_ref_images):
-                            cur_ind += 1
-                            entry[str(cur_ind)] = data[name][i, :]
-                        cur_ind += 1                
+                        entry[name] = data[name][index, :]
+                        entry[name + '_ref'] = data[name][current_ref_index, :]                
                 else:
                     # Generate a random index
                     rand_index = randint(0, self._count_per_person[key] - 1)
-                    cur_ind = 0
                     for name in self.entries_to_use:
-                        entry[str(cur_ind)] = data[name][index, :]
-                        cur_ind += 1 
-                        entry[str(cur_ind)] = data[name][rand_index, :]
-                        cur_ind += 1              
+                        entry[name] = data[name][index, :]
+                        entry[name + '_ref'] = data_ref[name][rand_index, :]           
                 
                 yield entry
         finally:
