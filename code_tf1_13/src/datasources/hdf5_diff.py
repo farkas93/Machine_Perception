@@ -48,9 +48,6 @@ class HDF5DiffSource(BaseDataSource):
             self._short_name += ':test'
 
         hdf5_ref = h5py.File(hdf_path_ref, 'r')
-        self._short_name_ref = 'HDF:%s' % '/'.join(hdf_path_ref.split('/')[-2:])
-        if testing:
-            self._short_name_ref += ':test'
 
         # Cache other settings
         self._use_colour = use_colour
@@ -71,14 +68,19 @@ class HDF5DiffSource(BaseDataSource):
                 index_counter += 1
         self._num_entries = index_counter
 
+        # Variables used for gaze calculation from L_diff loss
+        self._hdf5_ref = hdf5_ref
+        self._current_ref_index = 0
+        self._n_ref_images = n_ref_images
         self._ref_key = list(hdf5_ref.keys())[0]
+        self._ref_gazes = []
+        for i in range(self._n_ref_images):
+            self._ref_gazes.append(self._hdf5_ref[self._ref_key]['gaze'][i, :])
+            
 
         if entries_to_use is None:  # use all available input data if not specified
             entries_to_use = list(next(iter(hdf5.values())).keys())
         self.entries_to_use = entries_to_use
-
-        self._hdf5_ref = hdf5_ref
-        self._current_ref_index = 0
 
         self._hdf5 = hdf5
         self._mutex = Lock()
@@ -86,7 +88,6 @@ class HDF5DiffSource(BaseDataSource):
         self._use_data_augmentation = augmentation
         self._brightness = brightness
         self._saturation = saturation
-        self._n_ref_images = n_ref_images
         super().__init__(tensorflow_session, batch_size=batch_size, testing=testing, **kwargs)
 
         # Set index to 0 again as base class constructor called HDF5Source::entry_generator once to

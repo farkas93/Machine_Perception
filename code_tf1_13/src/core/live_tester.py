@@ -23,7 +23,6 @@ import tensorflow as tf
 import logging
 logger = logging.getLogger(__name__)
 
-
 class LiveTester(object):
     """Manage concurrent testing on test data source."""
 
