@@ -127,6 +127,7 @@ class HDF5Source(BaseDataSource):
                 if self._use_data_augmentation:
                     # brightness change for image augmentation
                     hsv = cv.cvtColor(v, cv.COLOR_BGR2HSV)
+                        
                     h, s, val = cv.split(hsv)
                     if self._brightness is not (0,0):
                         update = randint(self._brightness[0], self._brightness[1])     # (-100, 200)
@@ -163,6 +164,9 @@ class HDF5Source(BaseDataSource):
                     v = np.transpose(v, [2, 0, 1])
                 elif not self._use_colour:
                     v = np.expand_dims(v, axis=0 if self.data_format == 'NCHW' else -1)
+            
+                if k == 'eye-region':
+                    v = cv.resize(v, (448,120))
                 entry[k] = v
 
         # Ensure all values in an entry are 4-byte floating point numbers
