@@ -39,11 +39,11 @@ class Trainer:
       self.train_loss.reset_states()
       self.test_loss.reset_states()
 
-      for eye_patches, head_angles, gaze_out in train_ds:
-        self.train_step(eye_patches, head_angles, gaze_out)
+      for input_imgs, input_refs, gaze_out in train_ds:
+        self.train_step(input_imgs, input_refs, gaze_out)
 
-      for eye_patches, head_angles, gaze_out in test_ds:
-        self.test_step(eye_patches, head_angles, gaze_out)
+      for input_imgs, input_refs, gaze_out in test_ds:
+        self.test_step(input_imgs, input_refs, gaze_out)
 
       # Print status update
       template = 'Epoch {}, Train Loss: {}, Test Loss: {}'
