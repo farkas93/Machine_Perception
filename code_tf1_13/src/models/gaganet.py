@@ -287,7 +287,7 @@ class GaGaZs(BaseModel):
             self.summary.histogram('fc2/activations', fc2_layer)
 
             # Directly regress two polar angles for gaze direction            
-            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc2_layer)
+            out = tf.keras.layers.Dense(units=2, activation=None, name='output_layer')(fc3_layer)
             self.summary.histogram('output_layer/activations', out)
 
         # Define outputs
