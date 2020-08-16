@@ -1,6 +1,16 @@
 # MP Project: Eye Gaze Estimation
 
-Note: Add all datasets in a `/datasets` folder
+## Requirements
+The following python libraries should be installed:
+
+```
+tensorflow-gpu==1.13.0 or 1.12.0
+coloredlogs
+h5py
+numpy
+opencv-python
+ujson
+```
 
 ## How to run our Code
 Start by checking out this git repo.
