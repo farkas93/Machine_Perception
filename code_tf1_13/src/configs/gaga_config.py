@@ -7,6 +7,11 @@ gaga_config['learning_rate'] = 1e-4
 gaga_config['noise_std'] = 0.2
 gaga_config['dropout_seed'] = 5
 
+# Data Augmentation
+gaga_config['use_augmentation'] = True
+gaga_config['brightness_range'] = (-100, 200)
+gaga_config['saturation_range'] = (-50, 50)
+
 
 #LR stuff
 gaga_config['nr_lr_reductions'] = 4

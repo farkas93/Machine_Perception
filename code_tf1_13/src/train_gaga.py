@@ -116,8 +116,9 @@ if __name__ == '__main__':
                     data_format='NCHW',
                     shuffle=True,
                     staging=True,
-                    augmentation=True,
-                    brightness=(-100, 200)
+                    augmentation=gaga_config['use_augmentation'],
+                    brightness=gaga_config['brightness_range'],
+                    saturation=gaga_config['saturation_range']
                 ),
             },
             test_data={
