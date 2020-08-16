@@ -195,9 +195,9 @@ class GaGaZs(BaseModel):
         left = tf.keras.backend.cast(input_tensors['left-eye'], dtype = tf.float32)
         right = tf.keras.backend.cast(input_tensors['right-eye'], dtype = tf.float32)
 
-        # Induce Noise better generalisation
-        left = tf.keras.layers.GaussianNoise(stddev=gaga_config['noise_std'])(left)
-        right = tf.keras.layers.GaussianNoise(stddev=gaga_config['noise_std'])(right)
+        # # Induce Noise better generalisation (Not used in our final version)
+        # left = tf.keras.layers.GaussianNoise(stddev=gaga_config['noise_std'])(left)
+        # right = tf.keras.layers.GaussianNoise(stddev=gaga_config['noise_std'])(right)
 
         # Here, the `tf.variable_scope` scope is used to structure the
         # visualization in the Graphs tab on Tensorboard
